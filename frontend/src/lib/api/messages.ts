@@ -9,6 +9,10 @@ export const listMessages = (conversationId: number, before?: number) =>
     query: { before, limit: PAGE_SIZE },
   });
 
+/** Newest-first text search; pass a conversation id to search inside one chat. */
+export const searchMessages = (query: string, conversationId?: number) =>
+  request<Message[]>("/messages/search", { query: { q: query, conversationId } });
+
 export interface SendMessagePayload {
   clientId: string;
   body: string;

@@ -10,6 +10,7 @@ from app.core.clock import utcnow
 from app.core.errors import BadRequest, NotFound
 from app.models import (
     Conversation,
+    ConversationMember,
     ConversationType,
     Message,
     MessageKind,
@@ -160,6 +161,43 @@ def list_messages(
     page = list(db.scalars(stmt.order_by(Message.id.desc()).limit(limit)))
     page.reverse()
     return page
+
+
+def search_messages(
+    db: Session, user: User, query: str, conversation_id: int | None = None, limit: int = 50
+) -> list[Message]:
+    """Case-insensitive text search, newest first.
+
+    Only conversations the user is still a member of are searched, and only history from
+    after they joined (same visibility rule as `list_messages`). Pass `conversation_id` to
+    search inside a single chat.
+    """
+    term = query.strip()
+    if not term:
+        return []
+    if conversation_id is not None:
+        queries.require_member(db, conversation_id, user.id)
+
+    # Escape LIKE wildcards so "50%" or "a_b" are matched literally.
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    stmt = (
+        select(Message)
+        .join(
+            ConversationMember,
+            (ConversationMember.conversation_id == Message.conversation_id)
+            & (ConversationMember.user_id == user.id),
+        )
+        .where(
+            ConversationMember.left_at.is_(None),
+            Message.created_at >= ConversationMember.joined_at,
+            Message.kind != MessageKind.SYSTEM,
+            Message.body.ilike(f"%{escaped}%", escape="\\"),
+            queries.is_visible(),
+        )
+    )
+    if conversation_id is not None:
+        stmt = stmt.where(Message.conversation_id == conversation_id)
+    return list(db.scalars(stmt.order_by(Message.id.desc()).limit(limit)))
 
 
 def mark_conversation_read(

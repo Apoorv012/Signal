@@ -173,3 +173,41 @@ def test_disappearing_messages_expire(alice, bob, dm):
         db.commit()
     bodies = [m["body"] for m in bob.get(f"/api/conversations/{dm}/messages").json()]
     assert "secret" not in bodies
+
+
+def test_search_is_case_insensitive_and_newest_first(alice, bob, dm):
+    first = alice.send(dm, "Lunch at noon").json()["id"]
+    alice.send(dm, "something else")
+    second = bob.send(dm, "no LUNCH today").json()["id"]
+    found = alice.get("/api/messages/search", params={"q": "lunch"}).json()
+    assert [m["id"] for m in found] == [second, first]
+    assert found[0]["conversationId"] == dm
+
+
+def test_search_can_be_scoped_to_one_conversation(alice, bob, carol, dm, group):
+    alice.send(dm, "pizza in dm")
+    alice.send(group, "pizza in group")
+    everywhere = alice.get("/api/messages/search", params={"q": "pizza"}).json()
+    assert len(everywhere) == 2
+    scoped = alice.get("/api/messages/search", params={"q": "pizza", "conversationId": dm}).json()
+    assert [m["conversationId"] for m in scoped] == [dm]
+
+
+def test_search_matches_wildcards_literally(alice, dm):
+    alice.send(dm, "100% sure")
+    alice.send(dm, "plain text")
+    assert len(alice.get("/api/messages/search", params={"q": "%"}).json()) == 1
+    assert alice.get("/api/messages/search", params={"q": "_"}).json() == []
+
+
+def test_search_never_returns_other_peoples_chats(alice, bob, carol, dm):
+    alice.send(dm, "secret plan")
+    assert carol.get("/api/messages/search", params={"q": "secret"}).json() == []
+    denied = carol.get("/api/messages/search", params={"q": "secret", "conversationId": dm})
+    assert denied.status_code == 403
+
+
+def test_search_skips_system_messages(alice, bob, carol, group):
+    alice.send(group, "hello team")
+    hits = alice.get("/api/messages/search", params={"q": "hello"}).json()
+    assert [m["body"] for m in hits] == ["hello team"]

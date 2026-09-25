@@ -21,13 +21,25 @@ export interface ToastOptions {
   href?: string;
 }
 
+/** A message the chat pane should scroll to and flash (from any search UI). */
+export interface JumpTarget {
+  conversationId: number;
+  messageId: number;
+  /** Text to highlight inside the bubble. */
+  query: string;
+}
+
 interface UiState {
   modal: ModalId | null;
   /** Conversation a modal (e.g. group info) refers to. */
   modalConversationId: number | null;
   /** Conversation currently on screen; its incoming messages are marked read immediately. */
   activeConversationId: number | null;
+  jumpTarget: JumpTarget | null;
   toasts: Toast[];
+  requestJump: (target: JumpTarget) => void;
+  /** Clears the jump target, but only if it belongs to `conversationId` (when given). */
+  clearJump: (conversationId?: number) => void;
   openModal: (modal: ModalId, conversationId?: number) => void;
   closeModal: () => void;
   setActiveConversation: (id: number | null) => void;
@@ -54,7 +66,15 @@ export const useUiStore = create<UiState>((set, get) => {
     modal: null,
     modalConversationId: null,
     activeConversationId: null,
+    jumpTarget: null,
     toasts: [],
+    requestJump: (target) => set({ jumpTarget: target }),
+    clearJump: (conversationId) =>
+      set((state) =>
+        conversationId === undefined || state.jumpTarget?.conversationId === conversationId
+          ? { jumpTarget: null }
+          : state,
+      ),
     openModal: (modal, conversationId) =>
       set({ modal, modalConversationId: conversationId ?? get().modalConversationId }),
     closeModal: () => set({ modal: null }),

@@ -10,6 +10,19 @@ from app.services import attachment_service, message_service, presenters
 router = APIRouter(tags=["messages"])
 
 
+@router.get("/messages/search", response_model=list[MessageOut])
+def search_messages(
+    q: str = Query(min_length=1, max_length=100),
+    conversation_id: int | None = Query(default=None, alias="conversationId"),
+    limit: int = Query(default=50, ge=1, le=100),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[MessageOut]:
+    """Search my messages, optionally within one conversation (used by both search UIs)."""
+    messages = message_service.search_messages(db, user, q, conversation_id, limit)
+    return [presenters.message_out(db, m, user.id) for m in messages]
+
+
 @router.get("/conversations/{conversation_id}/messages", response_model=list[MessageOut])
 def list_messages(
     conversation_id: int,

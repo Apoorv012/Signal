@@ -6,15 +6,28 @@ import { useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useConversations } from "@/hooks/useConversations";
+import { useMessageSearch } from "@/hooks/useMessageSearch";
 import type { Conversation } from "@/types";
 
 import { ConversationListHeader } from "./ConversationListHeader";
 import { ConversationListItem } from "./ConversationListItem";
+import { MessageSearchResult } from "./MessageSearchResult";
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  // Section labels only exist on the iPhone layout.
+function SectionLabel({
+  children,
+  always,
+}: {
+  children: React.ReactNode;
+  /** Search headings show on desktop too; the Pinned/Chats labels are iPhone-only. */
+  always?: boolean;
+}) {
   return (
-    <h2 className="text-text px-4 pt-4 pb-1 text-[1.0625rem] font-semibold md:hidden">
+    <h2
+      className={clsx(
+        "text-text px-4 pt-4 pb-1 text-[1.0625rem] font-semibold",
+        always ? "md:text-secondary md:px-[1.85rem] md:text-[0.875rem]" : "md:hidden",
+      )}
+    >
       {children}
     </h2>
   );
@@ -45,6 +58,14 @@ export function ConversationList() {
     [all, query, searching],
   );
 
+  const messageSearch = useMessageSearch(query);
+  const chatsById = useMemo(() => new Map(all.map((c) => [c.id, c])), [all]);
+  const messageHits = messageSearch.results.flatMap((message) => {
+    const conversation = chatsById.get(message.conversationId);
+    return conversation ? [{ message, conversation }] : [];
+  });
+  const showHeadings = results.length > 0 && messageHits.length > 0;
+
   const renderItems = (items: Conversation[]) =>
     items.map((c) => (
       <ConversationListItem key={c.id} conversation={c} selected={c.id === selectedId} />
@@ -69,10 +90,20 @@ export function ConversationList() {
 
         {searching ? (
           <>
+            {showHeadings && <SectionLabel always>Chats</SectionLabel>}
             {renderItems(results)}
-            {results.length === 0 && (
+            {showHeadings && <SectionLabel always>Messages</SectionLabel>}
+            {messageHits.map(({ message, conversation }) => (
+              <MessageSearchResult
+                key={message.id}
+                message={message}
+                conversation={conversation}
+                query={messageSearch.term}
+              />
+            ))}
+            {results.length === 0 && messageHits.length === 0 && !messageSearch.isSearching && (
               <p className="text-secondary px-6 py-8 text-center text-[0.9375rem]">
-                No chats match &ldquo;{query.trim()}&rdquo;
+                No chats or messages match &ldquo;{query.trim()}&rdquo;
               </p>
             )}
           </>

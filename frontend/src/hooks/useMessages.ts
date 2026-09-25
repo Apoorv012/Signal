@@ -33,10 +33,25 @@ export function useMessages(conversationId: number) {
     });
   }, [queryClient, key, conversationId]);
 
+  /** Loads older pages until `messageId` is in the cache. Resolves false if it never shows up. */
+  const reveal = useCallback(
+    async (messageId: number) => {
+      for (;;) {
+        const page = queryClient.getQueryData<MessagesPage>(key);
+        if (!page) return false;
+        if (page.items.some((m) => m.id === messageId)) return true;
+        if (!page.hasMore) return false;
+        await loadOlder();
+      }
+    },
+    [queryClient, key, loadOlder],
+  );
+
   return {
     messages: query.data?.items ?? NONE,
     hasMore: query.data?.hasMore ?? false,
     isLoading: query.isLoading,
     loadOlder,
+    reveal,
   };
 }

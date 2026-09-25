@@ -1,6 +1,7 @@
 import clsx from "clsx";
 
 import { Avatar } from "@/components/ui/Avatar";
+import { HighlightedText } from "@/components/ui/HighlightedText";
 import type { Message, User } from "@/types";
 
 import { FileContent } from "./content/FileContent";
@@ -19,6 +20,10 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   isRunStart: boolean;
   showTimer: boolean;
+  /** Search term to highlight inside the text. */
+  highlight?: string;
+  /** Briefly tint the row (a search result was just opened). */
+  flash?: boolean;
   onRetry: (message: Message) => void;
 }
 
@@ -32,6 +37,8 @@ export function MessageBubble({
   showAvatar,
   isRunStart,
   showTimer,
+  highlight,
+  flash,
   onRetry,
 }: MessageBubbleProps) {
   const meta = <MessageMeta message={message} outgoing={outgoing} showTimer={showTimer} />;
@@ -40,8 +47,10 @@ export function MessageBubble({
 
   return (
     <div
+      data-message-id={message.id}
       className={clsx(
         "flex items-end gap-2 px-4 md:px-5",
+        flash && "message-flash",
         outgoing ? "justify-end" : "justify-start",
         isRunStart ? "mt-3 md:mt-5" : "mt-[0.125rem]",
       )}
@@ -120,7 +129,7 @@ export function MessageBubble({
                 isImage && "px-3.5 py-2 md:px-[0.9rem] md:py-[0.6rem]",
               )}
             >
-              {message.body}
+              <HighlightedText text={message.body} query={highlight} />
               <span className="float-right mt-[0.5625rem] ml-3">{meta}</span>
             </p>
           )}

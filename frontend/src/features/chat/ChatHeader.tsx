@@ -6,7 +6,6 @@ import { Icon } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/IconButton";
 import { Menu, type MenuItem } from "@/components/ui/Menu";
-import { useComingSoon } from "@/hooks/useComingSoon";
 import { useCurrentUser } from "@/hooks/useSession";
 import { useIsOnline, useLastSeen, useTypingUsers } from "@/hooks/useTyping";
 import { updateMySettings } from "@/lib/api/conversations";
@@ -40,9 +39,14 @@ function useSubtitle(conversation: Conversation): string | null {
 }
 
 /** Top bar: back (mobile), avatar + title, call/search/more actions. */
-export function ChatHeader({ conversation }: { conversation: Conversation }) {
+export function ChatHeader({
+  conversation,
+  onSearch,
+}: {
+  conversation: Conversation;
+  onSearch: () => void;
+}) {
   const queryClient = useQueryClient();
-  const soon = useComingSoon();
   const openModal = useUiStore((state) => state.openModal);
   const pushToast = useUiStore((state) => state.pushToast);
   const me = useCurrentUser();
@@ -63,6 +67,8 @@ export function ChatHeader({ conversation }: { conversation: Conversation }) {
     ...(isGroup
       ? [{ label: "Group info", onSelect: () => openModal("group-info", conversation.id) }]
       : []),
+    // The header icon is desktop-only; on the phone search lives in this menu.
+    { label: "Search", onSelect: onSearch },
     {
       label: conversation.isPinned ? "Unpin chat" : "Pin chat",
       onSelect: () => void saveSetting({ isPinned: !conversation.isPinned }),
@@ -145,12 +151,7 @@ export function ChatHeader({ conversation }: { conversation: Conversation }) {
             onClick={() => pushToast("Voice calls are coming soon")}
           />
         )}
-        <IconButton
-          icon="search"
-          label="Search"
-          className="max-md:hidden"
-          onClick={soon("Search in chat")}
-        />
+        <IconButton icon="search" label="Search" className="max-md:hidden" onClick={onSearch} />
         <Menu icon="more" label="More" items={menuItems} />
       </div>
     </header>
