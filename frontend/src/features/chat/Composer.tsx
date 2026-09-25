@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icons/Icon";
 import { IconButton } from "@/components/ui/IconButton";
@@ -22,6 +22,13 @@ export function Composer({ conversationId }: { conversationId: number }) {
   const { send } = useSendMessage(conversationId);
   const { onInput, stop } = useTypingBroadcast(conversationId);
   const canSend = text.trim().length > 0;
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Desktop: opening a chat lets you start typing straight away (not on the phone, where it
+  // would pop the keyboard open over the messages).
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 768px)").matches) inputRef.current?.focus();
+  }, [conversationId]);
 
   const submit = () => {
     if (!canSend) return;
@@ -70,6 +77,7 @@ export function Composer({ conversationId }: { conversationId: number }) {
           }}
         >
           <input
+            ref={inputRef}
             value={text}
             onChange={(event) => {
               setText(event.target.value);
