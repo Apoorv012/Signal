@@ -46,7 +46,7 @@ export function MessageList({
   const isGroup = conversation.type === "group";
 
   // Right-click menu and multi-select ("Select" keeps the mode open so you can pick more).
-  const { openMenu, menu } = useContextMenu();
+  const { menuProps, menu } = useContextMenu();
   const selection = useUiStore((state) => state.selection);
   const startSelection = useUiStore((state) => state.startSelection);
   const toggleSelected = useUiStore((state) => state.toggleSelected);
@@ -177,9 +177,7 @@ export function MessageList({
             selecting={selectedIds !== null && message.id > 0}
             selected={selectedIds?.includes(message.id)}
             onToggleSelect={() => toggleSelected(message.id)}
-            onContextMenu={
-              message.id > 0 ? (event) => openMenu(event, menuItems(message)) : undefined
-            }
+            menuProps={message.id > 0 ? menuProps(menuItems(message)) : undefined}
             onRetry={retry}
           />
         );

@@ -84,7 +84,7 @@ cd frontend && npm run typecheck && npm run lint && npx prettier --check "src/**
 | Mock auth: phone (country code + number), fixed OTP, name + avatar, login/logout, persisted session | Done |
 | Conversation list: recency sort, search (chats **and message text**), All / Unread / Groups filter, unread badges, "marked unread" dot, last-message preview, online / last seen, pinned + muted indicators | Done |
 | In-chat search (match counter, next/previous, highlight, jumps to old messages) | Done |
-| Right-click menus (desktop): chat list (pin, mute, mark unread, clear, delete / leave) and messages (select + multi-select, copy, forward to up to 5 chats, delete for me / for everyone) | Done |
+| Right-click menus (desktop) and touch equivalents (iPhone: long-press opens the same actions as a bottom sheet; chat rows swipe right for Pin / Unread and left for Mute / Delete): chat list (pin, mute, mark unread, clear, delete / leave) and messages (select + multi-select, copy, forward to up to 5 chats, delete for me / for everyone) | Done |
 | Contacts: add by phone / `@username`, searchable everywhere (new chat, new group, add members); anyone you exchange a direct message with is saved automatically. User search, Note to Self | Done |
 | 1:1 messaging: real-time, timestamps, sending → sent → delivered → read, typing indicator, persistence | Done |
 | Groups: create, members, admin add / remove / promote, leave, rename, persistence | Done |

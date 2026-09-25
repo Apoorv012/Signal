@@ -154,3 +154,12 @@ body {
 .message-flash {
   animation: message-flash 1.6s ease-out;
 }
+
+/* Touch: a long press opens our menu, so suppress the native link callout and text selection. */
+@media (pointer: coarse) {
+  .touch-menu-target {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

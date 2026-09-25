@@ -4,30 +4,44 @@ import { useCallback, useState } from "react";
 
 import { ContextMenu, type ContextMenuItem } from "@/components/ui/ContextMenu";
 
+import { useLongPress } from "./useLongPress";
+
 interface OpenMenu {
   x: number;
   y: number;
   items: ContextMenuItem[];
+  /** Phone width: shown as a bottom sheet instead of a popup at the cursor. */
+  sheet: boolean;
 }
 
 /**
- * Right-click menu (desktop only: on touch screens the browser keeps its own long-press behaviour).
- * Usage: `onContextMenu={(e) => openMenu(e, items)}` and render `{menu}` once.
+ * One menu, two ways to open it: right-click (mouse / Android long-press) and a touch long-press
+ * (iOS). Usage: `<div {...menuProps(items)}>` plus `{menu}` rendered once.
  * Text fields keep the native menu so paste and spell-check still work.
  */
 export function useContextMenu() {
   const [open, setOpen] = useState<OpenMenu | null>(null);
+  const { bind } = useLongPress();
 
-  const openMenu = useCallback((event: React.MouseEvent, items: ContextMenuItem[]) => {
-    const target = event.target as HTMLElement;
-    if (target.closest("input, textarea, [contenteditable=true]")) return;
-    if (!window.matchMedia("(min-width: 768px)").matches) return;
-    event.preventDefault();
-    setOpen({ x: event.clientX, y: event.clientY, items });
+  const show = useCallback((x: number, y: number, items: ContextMenuItem[]) => {
+    setOpen({ x, y, items, sheet: window.matchMedia("(max-width: 767px)").matches });
   }, []);
+
+  const menuProps = useCallback(
+    (items: ContextMenuItem[]) => ({
+      ...bind((point) => show(point.x, point.y, items)),
+      onContextMenu: (event: React.MouseEvent) => {
+        if ((event.target as HTMLElement).closest("input, textarea, [contenteditable=true]"))
+          return;
+        event.preventDefault();
+        show(event.clientX, event.clientY, items);
+      },
+    }),
+    [bind, show],
+  );
 
   const close = useCallback(() => setOpen(null), []);
   const menu = open ? <ContextMenu {...open} onClose={close} /> : null;
 
-  return { openMenu, menu };
+  return { menuProps, menu };
 }

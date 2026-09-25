@@ -29,7 +29,8 @@ interface MessageBubbleProps {
   selecting?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
-  onContextMenu?: (event: React.MouseEvent) => void;
+  /** Right-click / long-press handlers from `useContextMenu().menuProps`. */
+  menuProps?: React.HTMLAttributes<HTMLDivElement>;
   onRetry: (message: Message) => void;
 }
 
@@ -48,7 +49,7 @@ export function MessageBubble({
   selecting,
   selected,
   onToggleSelect,
-  onContextMenu,
+  menuProps,
   onRetry,
 }: MessageBubbleProps) {
   const meta = <MessageMeta message={message} outgoing={outgoing} showTimer={showTimer} />;
@@ -58,16 +59,17 @@ export function MessageBubble({
   return (
     <div
       data-message-id={message.id}
-      onContextMenu={onContextMenu}
+      {...menuProps}
       // Capture: while selecting, a click anywhere on the row (even on a link) only toggles it.
       onClickCapture={(event) => {
-        if (!selecting) return;
+        menuProps?.onClickCapture?.(event); // swallows the click that ends a long press
+        if (event.isPropagationStopped() || !selecting) return;
         event.preventDefault();
         event.stopPropagation();
         onToggleSelect?.();
       }}
       className={clsx(
-        "relative flex items-end gap-2",
+        "touch-menu-target relative flex items-end gap-2",
         selecting ? "cursor-pointer pr-4 pl-11 md:pr-5 md:pl-12" : "px-4 md:px-5",
         selected && "bg-unread/10",
         flash && "message-flash",

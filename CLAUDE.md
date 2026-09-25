@@ -180,7 +180,20 @@ Delete, and a cancel button. Forward opens a chat picker (Signal allows up to 5 
   (`ForwardModal`, max 5 chats, text only until attachments exist), Delete (`DeleteMessagesDialog`):
   "for me" = `message_hidden` row, "for everyone" = own messages < 24 h, sets `deleted_at` and pushes
   `message.deleted` (handled only in `lib/realtime/handleEvent.ts`).
-- `ContextMenu` + `useContextMenu` are desktop-only (>= 768px) and leave text inputs alone.
+- `ContextMenu` + `useContextMenu` serve both input types and leave text inputs alone: mouse right-click
+  (popup at the cursor, closes on scroll/resize/blur) and touch long-press (`useLongPress`, 450 ms, pointer
+  events because iOS Safari never fires `contextmenu`). Below 768px the menu is a bottom sheet
+  (no resize/blur/scroll auto-close: iOS address-bar resizes would dismiss it). Spread
+  `menuProps(items)` on the pressable element; `.touch-menu-target` (globals.css) disables the native
+  callout / text selection on coarse pointers.
+- **Swipe actions** (`features/conversations/SwipeableRow`): touch-only, iPhone layout only (actions are
+  `md:hidden`). Right = Pin / Unread, left = Mute / Delete; one row open at a time; a swipe or a tap on
+  an open row never opens the chat. Swipe-to-reply on messages is not built (needs Reply, Phase A).
+- Testing touch in the browser pane: dispatch `PointerEvent`s with `pointerType: "touch"` and `await`
+  ~40 ms between moves (React must re-render between events). Real-device behaviour (iOS haptics,
+  rubber-banding, address bar) is NOT covered by that and needs the user's phone.
+- After `resize_window` preset desktop the pane can report `innerWidth: 0`; use an explicit
+  1280x720 resize before desktop checks.
 - **Reply / React** items are not in the menus yet: add them when those Phase A features are built.
 - Existing SQLite files get new columns via `app/db/columns.py` (`add_missing_columns`, no Alembic):
   add any future column there too.
