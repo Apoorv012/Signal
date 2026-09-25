@@ -231,12 +231,15 @@ REST under `/api` (bearer token in `Authorization`), full schema at `/docs`.
 ## Assumptions and simplifications
 
 - **Auth is mocked:** any valid E.164 number + the fixed code `123456`. A number without a country code is
-  rejected (never guessed). No real SMS, no key exchange; "end-to-end encryption" is simulated.
+  rejected (never guessed). No real SMS, no key exchange; "end-to-end encryption" is simulated (safety
+  numbers and lock notices only). Accounts can also register with a username + password (no phone); the two
+  kinds of account are never merged.
 - **Single backend instance** with SQLite and local file storage. For deployment it needs a persistent
   volume (database + `media/`) and must not scale horizontally.
 - **Ids are integers** in the API. Timestamps are ISO-8601 UTC.
 - **Muting** suppresses notifications and greys the unread badge; muted chats are excluded from the tab badge.
-- **Expired (disappearing) messages** are hidden by queries; there is no background purge yet.
+- **Expired (disappearing) messages** are hidden by queries and physically deleted (with their files) by a
+  background sweep every 60 seconds.
 - Verified on Windows desktop browsers and iPhone Safari only (per the brief's scope of testing).
 - Windows browsers do not render flag emoji, so the country picker shows ISO codes.
 

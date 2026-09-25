@@ -1,0 +1,4 @@
+# Caddy gets and renews the HTTPS certificate automatically; it proxies HTTP and WebSockets.
+api.signal.apoorvm.com {
+	reverse_proxy backend:8000
+}

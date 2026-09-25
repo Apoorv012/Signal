@@ -1,0 +1,25 @@
+# Runs on the EC2 box: `docker compose up -d --build` from this folder.
+services:
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    environment:
+      CORS_ORIGINS: '["https://signal.apoorvm.com"]'
+    volumes:
+      - signal-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - backend
+
+volumes:
+  signal-data:
+  caddy-data:
