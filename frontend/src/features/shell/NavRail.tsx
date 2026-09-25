@@ -31,7 +31,7 @@ export function NavRail() {
   const me = useCurrentUser();
 
   return (
-    <nav className="bg-rail hidden w-20 shrink-0 flex-col items-center py-4 md:flex">
+    <nav className="bg-rail border-divider hidden w-24 shrink-0 flex-col items-center border-r py-4 md:flex">
       <button
         aria-label="Menu"
         className="text-text hover:bg-hover mb-4 flex size-12 items-center justify-center rounded-xl"
@@ -49,7 +49,7 @@ export function NavRail() {
               aria-label={item.label}
               title={item.label}
               className={clsx(
-                "text-text relative flex h-11 w-[60px] items-center justify-center rounded-xl transition-colors",
+                "text-text relative flex h-12 w-[4.5rem] items-center justify-center rounded-xl transition-colors",
                 active ? "bg-selected" : "hover:bg-hover",
               )}
             >

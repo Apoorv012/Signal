@@ -18,7 +18,7 @@ export function MessageMeta({ message, outgoing, showTimer, className }: Message
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 text-[14px] leading-none whitespace-nowrap md:text-[13px]",
+        "inline-flex items-center gap-1 text-[0.875rem] leading-none whitespace-nowrap md:text-[0.8125rem]",
         outgoing ? "text-on-bubble-out/80" : "text-secondary",
         className,
       )}

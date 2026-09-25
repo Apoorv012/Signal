@@ -28,7 +28,7 @@ export function ConversationListItem({ conversation, selected }: ConversationLis
     <Link
       href={`/chats/${conversation.id}`}
       className={clsx(
-        "flex items-start gap-3 rounded-xl px-3 py-3 transition-colors md:mx-2 md:px-3",
+        "flex items-start gap-3 rounded-xl px-3 py-3 transition-colors md:mx-[0.75rem] md:px-[1.05rem]",
         selected ? "md:bg-selected" : "hover:bg-hover",
       )}
     >
@@ -36,17 +36,17 @@ export function ConversationListItem({ conversation, selected }: ConversationLis
         name={conversation.title}
         src={conversation.avatarUrl}
         variant={conversation.type}
-        size={52}
+        size={56}
       />
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-text truncate text-[17px] font-semibold md:text-[16px]">
+          <span className="text-text truncate text-[1.0625rem] font-semibold md:text-[1rem]">
             {conversation.title}
           </span>
           <time
             suppressHydrationWarning
-            className="text-secondary shrink-0 text-[15px] md:text-[14px]"
+            className="text-secondary shrink-0 text-[0.9375rem] md:text-[0.875rem]"
           >
             {formatTimestamp(lastMessage.createdAt)}
           </time>
@@ -55,8 +55,7 @@ export function ConversationListItem({ conversation, selected }: ConversationLis
         <div className="flex items-start gap-2">
           <p
             className={clsx(
-              "text-secondary line-clamp-2 min-w-0 flex-1 text-[15px] leading-[1.35] md:text-[14px]",
-              isUnread && "text-text",
+              "text-secondary line-clamp-2 min-w-0 flex-1 text-[0.9375rem] leading-[1.35] md:text-[0.875rem]",
             )}
           >
             {lastMessage.senderName && `${lastMessage.senderName}: `}

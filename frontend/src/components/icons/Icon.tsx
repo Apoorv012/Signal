@@ -55,6 +55,17 @@ export type IconName =
   | "device-laptop"
   | "link"
   | "raise_hand-fill-light"
+  | "color"
+  | "help-light"
+  | "bell-ring-fill-light"
+  | "folder"
+  | "globe"
+  | "key"
+  | "block"
+  | "archive"
+  | "recent"
+  | "qr_code"
+  | "at"
   | "share_screen-fill-light"
   | "speaker-x"
   | "arrow-down"
@@ -69,6 +80,9 @@ interface IconProps {
   className?: string;
 }
 
+/** Sizes are given in px at the 16px root and scale with the root font size (larger on desktop). */
+const toRem = (px: number) => `${px / 16}rem`;
+
 /**
  * Renders an SVG as a CSS mask so it inherits `currentColor` (text-* utilities recolour it).
  */
@@ -79,8 +93,8 @@ export function Icon({ name, size = 24, width, height, className }: IconProps) {
       aria-hidden
       className={clsx("inline-block shrink-0 bg-current", className)}
       style={{
-        width: width ?? size,
-        height: height ?? size,
+        width: toRem(width ?? size),
+        height: toRem(height ?? size),
         maskImage: url,
         WebkitMaskImage: url,
         maskRepeat: "no-repeat",

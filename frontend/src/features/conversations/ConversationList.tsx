@@ -13,7 +13,9 @@ import { ConversationListItem } from "./ConversationListItem";
 function SectionLabel({ children }: { children: React.ReactNode }) {
   // Section labels only exist on the iPhone layout.
   return (
-    <h2 className="text-text px-4 pt-4 pb-1 text-[17px] font-semibold md:hidden">{children}</h2>
+    <h2 className="text-text px-4 pt-4 pb-1 text-[1.0625rem] font-semibold md:hidden">
+      {children}
+    </h2>
   );
 }
 
@@ -33,7 +35,7 @@ export function ConversationList() {
   return (
     <aside
       className={clsx(
-        "bg-chat md:bg-list md:border-divider min-h-0 w-full shrink-0 flex-col md:flex md:w-80 md:border-r lg:w-[340px]",
+        "bg-chat md:bg-list md:border-divider min-h-0 w-full shrink-0 flex-col md:flex md:w-[24rem] md:border-r",
         conversationId ? "hidden" : "flex",
       )}
     >

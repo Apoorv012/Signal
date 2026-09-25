@@ -37,7 +37,7 @@ export function MobileTabBar() {
           >
             <Icon name={tab.icon} size={28} />
             <Badge count={tab.badge} tone="notification" className="absolute -top-1 right-5" />
-            <span className="text-[12px] font-medium">{tab.label}</span>
+            <span className="text-[0.75rem] font-medium">{tab.label}</span>
           </Link>
         );
       })}

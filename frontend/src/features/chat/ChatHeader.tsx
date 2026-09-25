@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/IconButton";
-import { formatTimerLabel } from "@/lib/format/time";
+import { formatTimerShort } from "@/lib/format/time";
 import type { Conversation } from "@/types";
 
 /** Top bar: back (mobile), avatar + title, call/search/more actions. */
@@ -12,7 +12,7 @@ export function ChatHeader({ conversation }: { conversation: Conversation }) {
   const timer = conversation.disappearingSeconds;
 
   return (
-    <header className="bg-chat/85 flex h-16 shrink-0 items-center gap-1 px-2 backdrop-blur md:h-[72px] md:px-5">
+    <header className="bg-chat/85 flex h-16 shrink-0 items-center gap-1 px-2 backdrop-blur md:h-[5.25rem] md:px-5">
       <Link
         href="/chats"
         aria-label="Back"
@@ -29,13 +29,13 @@ export function ChatHeader({ conversation }: { conversation: Conversation }) {
         className="md:!size-11"
       />
       <div className="ml-2 min-w-0 flex-1">
-        <h1 className="text-text truncate text-[18px] leading-tight font-semibold">
+        <h1 className="text-text truncate text-[1.125rem] leading-tight font-semibold">
           {conversation.title}
         </h1>
         {timer !== undefined && (
-          <p className="text-secondary flex items-center gap-1 text-[14px] md:hidden">
+          <p className="text-secondary flex items-center gap-1 text-[0.875rem] md:hidden">
             <Icon name="timer-compact" size={16} />
-            {formatTimerLabel(timer)}
+            {formatTimerShort(timer)}
           </p>
         )}
       </div>

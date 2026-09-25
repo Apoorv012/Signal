@@ -24,6 +24,14 @@ export function formatDuration(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+/** Compact label for headers: "1d", "5h", "30s". */
+export function formatTimerShort(seconds: number): string {
+  if (seconds >= 86_400) return `${Math.round(seconds / 86_400)}d`;
+  if (seconds >= 3600) return `${Math.round(seconds / 3600)}h`;
+  if (seconds >= 60) return `${Math.round(seconds / 60)}m`;
+  return `${seconds}s`;
+}
+
 /** Human label for a disappearing-messages timer. */
 export function formatTimerLabel(seconds: number): string {
   if (seconds >= DAY / 1000)

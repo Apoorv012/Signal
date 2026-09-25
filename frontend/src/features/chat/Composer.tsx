@@ -30,10 +30,10 @@ export function Composer() {
         <div className="md:hidden">{toggleTray}</div>
         <IconButton icon="emoji" label="Emoji" className="max-md:hidden" />
 
-        <div className="bg-field flex h-11 min-w-0 flex-1 items-center rounded-full px-4">
+        <div className="bg-field flex h-11 min-w-0 flex-1 items-center rounded-full px-4 md:h-[2.4rem]">
           <input
             placeholder="Message"
-            className="text-text placeholder:text-secondary min-w-0 flex-1 bg-transparent text-[18px] outline-none md:text-[16px]"
+            className="text-text placeholder:text-secondary min-w-0 flex-1 bg-transparent text-[1.125rem] outline-none md:text-[1rem]"
           />
           <Icon name="sticker" size={26} className="text-text ml-2 md:hidden" />
         </div>

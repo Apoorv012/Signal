@@ -39,9 +39,9 @@ export function MessageBubble({
   return (
     <div
       className={clsx(
-        "flex items-end gap-2 px-4 md:px-6",
+        "flex items-end gap-2 px-4 md:px-5",
         outgoing ? "justify-end" : "justify-start",
-        isRunStart ? "mt-3" : "mt-[2px]",
+        isRunStart ? "mt-3" : "mt-[0.125rem]",
       )}
     >
       {!outgoing && isGroup && (
@@ -54,21 +54,23 @@ export function MessageBubble({
 
       <div
         className={clsx(
-          "flex max-w-[82%] min-w-0 flex-col md:max-w-[70%]",
+          "flex max-w-[82%] min-w-0 flex-col md:max-w-[68%]",
           outgoing && "items-end",
         )}
       >
         <div
           className={clsx(
-            "flow-root overflow-hidden rounded-[20px]",
-            isImage ? "p-0" : "px-3.5 py-2",
+            "flow-root overflow-hidden rounded-[1.25rem]",
+            isImage ? "p-0" : "px-3.5 py-2 md:px-[0.9rem] md:py-[0.6rem]",
             outgoing ? "bubble-out" : "bg-bubble-in text-text",
           )}
         >
           {showSenderName && sender && (
             <p
-              className={clsx("mb-0.5 text-[15px] font-semibold", isImage && "px-3.5 pt-2")}
-              style={{ color: sender.nameColor }}
+              className={clsx("mb-0.5 text-[0.9375rem] font-semibold", isImage && "px-3.5 pt-2")}
+              style={{
+                color: `color-mix(in srgb, ${sender.nameColor}, white var(--name-lighten))`,
+              }}
             >
               {sender.displayName}
             </p>
@@ -112,12 +114,12 @@ export function MessageBubble({
           {(message.kind === "text" || (isImage && hasBody)) && (
             <p
               className={clsx(
-                "text-[18px] leading-[1.3] break-words whitespace-pre-wrap md:text-[16px]",
-                isImage && "px-3.5 py-2",
+                "text-[1.0625rem] leading-[1.3] break-words whitespace-pre-wrap md:text-[1rem]",
+                isImage && "px-3.5 py-2 md:px-[0.9rem] md:py-[0.6rem]",
               )}
             >
               {message.body}
-              <span className="float-right mt-[9px] ml-3">{meta}</span>
+              <span className="float-right mt-[0.5625rem] ml-3">{meta}</span>
             </p>
           )}
         </div>

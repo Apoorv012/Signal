@@ -1,6 +1,11 @@
-import { ComingSoon } from "@/components/ui/ComingSoon";
+import { Icon } from "@/components/icons/Icon";
 
-/** Replaced by real settings placeholders (privacy, notifications, appearance) later in Phase 1. */
-export default function SettingsPage() {
-  return <ComingSoon icon="settings" title="Settings" />;
+/** Desktop empty state; on iPhone the section list fills the screen. */
+export default function SettingsIndexPage() {
+  return (
+    <div className="text-secondary hidden h-full flex-col items-center justify-center gap-3 md:flex">
+      <Icon name="settings" size={48} />
+      <p className="text-[0.9375rem]">Choose a setting</p>
+    </div>
+  );
 }

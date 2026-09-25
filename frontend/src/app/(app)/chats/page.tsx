@@ -5,7 +5,7 @@ export default function ChatsIndexPage() {
   return (
     <div className="text-secondary hidden h-full flex-col items-center justify-center gap-3 md:flex">
       <Icon name="chat" size={48} />
-      <p className="text-[15px]">Select a chat to start messaging</p>
+      <p className="text-[0.9375rem]">Select a chat to start messaging</p>
     </div>
   );
 }

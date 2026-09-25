@@ -32,7 +32,7 @@ function initials(name: string) {
 
 /** Round avatar: photo when available, else Signal-style coloured initials. */
 export function Avatar({ name, src, size = 48, variant, className }: AvatarProps) {
-  const box = { width: size, height: size };
+  const box = { width: `${size / 16}rem`, height: `${size / 16}rem` };
 
   if (variant === "note_to_self") {
     return (
@@ -61,7 +61,7 @@ export function Avatar({ name, src, size = 48, variant, className }: AvatarProps
 
   return (
     <span
-      style={{ ...box, backgroundColor: colorFor(name), fontSize: size * 0.38 }}
+      style={{ ...box, backgroundColor: colorFor(name), fontSize: `${(size * 0.38) / 16}rem` }}
       className={clsx(
         "flex shrink-0 items-center justify-center rounded-full font-medium text-white",
         className,

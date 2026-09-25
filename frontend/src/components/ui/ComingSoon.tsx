@@ -15,7 +15,7 @@ export function ComingSoon({ icon, title, description }: ComingSoonProps) {
         <Icon name={icon} size={32} />
       </span>
       <h1 className="text-text text-xl font-semibold">{title}</h1>
-      <p className="text-secondary max-w-xs text-[15px]">{description ?? "Coming soon"}</p>
+      <p className="text-secondary max-w-xs text-[0.9375rem]">{description ?? "Coming soon"}</p>
     </div>
   );
 }

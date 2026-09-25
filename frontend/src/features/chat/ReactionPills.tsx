@@ -16,11 +16,11 @@ export function ReactionPills({
       {reactions.map((reaction) => (
         <span
           key={reaction.emoji}
-          className="border-chat bg-reaction z-10 flex h-7 items-center gap-1 rounded-full border-2 px-2 text-[14px]"
+          className="border-chat bg-reaction z-10 flex h-7 items-center gap-1 rounded-full border-2 px-2 text-[0.875rem]"
         >
           <span>{reaction.emoji}</span>
           {reaction.count > 1 && (
-            <span className="text-text text-[13px] font-medium">{reaction.count}</span>
+            <span className="text-text text-[0.8125rem] font-medium">{reaction.count}</span>
           )}
         </span>
       ))}

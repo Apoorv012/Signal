@@ -11,7 +11,7 @@ export function ImageContent({ attachment }: { attachment: Attachment }) {
       alt=""
       loading="lazy"
       style={{ aspectRatio: ratio }}
-      className="block w-full max-w-[340px] object-cover md:w-[340px]"
+      className="block w-full max-w-[21.25rem] object-cover md:w-[21.25rem]"
     />
   );
 }

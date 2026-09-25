@@ -14,18 +14,18 @@ interface VoiceContentProps {
 /** Voice note: play button, waveform and duration. Meta (time/status) is rendered by the bubble. */
 export function VoiceContent({ durationSec, outgoing, seed }: VoiceContentProps) {
   return (
-    <div className="flex w-[260px] max-w-full items-center gap-3 py-1 md:w-[300px]">
+    <div className="flex w-[16.25rem] max-w-full items-center gap-3 py-1 md:w-[18.75rem]">
       <span
         className={clsx(
           "flex size-12 shrink-0 items-center justify-center rounded-full",
-          outgoing ? "text-on-bubble-out bg-white/25" : "bg-chat text-text",
+          outgoing ? "text-on-bubble-out bg-white/25" : "bg-control-in text-text",
         )}
       >
         <Icon name="play-fill" size={24} />
       </span>
       <div className="min-w-0 flex-1">
         <Waveform seed={seed} />
-        <span className="text-[14px] opacity-80">{formatDuration(durationSec)}</span>
+        <span className="text-[0.875rem] opacity-80">{formatDuration(durationSec)}</span>
       </div>
     </div>
   );

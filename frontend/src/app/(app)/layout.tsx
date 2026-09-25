@@ -1,7 +1,9 @@
+import { ToastViewport } from "@/components/ui/ToastViewport";
 import { MobileTabBar } from "@/features/shell/MobileTabBar";
+import { ModalHost } from "@/features/shell/ModalHost";
 import { NavRail } from "@/features/shell/NavRail";
 
-/** Authenticated app frame: nav rail on desktop, tab bar on mobile. */
+/** Authenticated app frame: nav rail on desktop, tab bar on mobile, global modals and toasts. */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="bg-chat flex h-dvh w-full overflow-hidden">
@@ -10,6 +12,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 flex-1">{children}</div>
         <MobileTabBar />
       </div>
+      <ModalHost />
+      <ToastViewport />
     </div>
   );
 }
