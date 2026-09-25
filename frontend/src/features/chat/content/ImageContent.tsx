@@ -1,0 +1,17 @@
+import type { Attachment } from "@/types";
+
+/** Image edge-to-edge inside the bubble (the bubble supplies caption + meta). */
+export function ImageContent({ attachment }: { attachment: Attachment }) {
+  const ratio =
+    attachment.width && attachment.height ? attachment.width / attachment.height : 4 / 3;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={attachment.url}
+      alt=""
+      loading="lazy"
+      style={{ aspectRatio: ratio }}
+      className="block w-full max-w-[340px] object-cover md:w-[340px]"
+    />
+  );
+}

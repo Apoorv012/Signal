@@ -1,26 +1,111 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Values were sampled from Signal's official app screens.
+ * Components never use raw colors: they use the semantic utilities below
+ * (bg-rail, text-secondary, ...), so theming is just swapping these variables.
+ * <html data-theme="light|dark"> is resolved before first paint (see ThemeScript).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rail: #f6f6f6;
+  --list: #f6f6f6;
+  --chat: #ffffff;
+  --selected: #dedede;
+  --hover: #ececec;
+  --field: #e4e4e4;
+  --divider: #e9e9e9;
+  --bubble-in: #e9e9e9;
+  --bubble-out: #2c6bed;
+  --on-bubble-out: #ffffff;
+  --text: #1b1b1b;
+  --text-secondary: #6e6e73;
+  --unread: #2c6bed;
+  --badge: #f44336;
+  --note-bg: #eae0fd;
+  --note-fg: #5b2fd5;
+  --reaction-bg: #e9e9e9;
+  --danger: #e33b3b;
+  --wallpaper: transparent;
+  --bubble-out-bg: var(--bubble-out);
+}
+
+:root[data-theme="dark"] {
+  --rail: #262626;
+  --list: #262626;
+  --chat: #1a1a1a;
+  --selected: #474747;
+  --hover: #303030;
+  --field: #363636;
+  --divider: #2d2d2d;
+  --bubble-in: #3b3b3b;
+  --on-bubble-out: #ffffff;
+  --text: #ffffff;
+  --text-secondary: #a8a8ad;
+  --unread: #2c6bed;
+  --note-bg: #3a2e63;
+  --note-fg: #c7b6ff;
+  --reaction-bg: #3b3b3b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-rail: var(--rail);
+  --color-list: var(--list);
+  --color-chat: var(--chat);
+  --color-selected: var(--selected);
+  --color-hover: var(--hover);
+  --color-field: var(--field);
+  --color-divider: var(--divider);
+  --color-bubble-in: var(--bubble-in);
+  --color-bubble-out: var(--bubble-out);
+  --color-on-bubble-out: var(--on-bubble-out);
+  --color-text: var(--text);
+  --color-secondary: var(--text-secondary);
+  --color-unread: var(--unread);
+  --color-badge: var(--badge);
+  --color-note-bg: var(--note-bg);
+  --color-note-fg: var(--note-fg);
+  --color-reaction: var(--reaction-bg);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--chat);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* iOS Safari renders the native system font like the real app (SF Pro). */
+@supports (-webkit-touch-callout: none) {
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), sans-serif;
+  }
+}
+
+/* Outgoing bubbles may use a gradient that spans the viewport (per-chat colour). */
+.bubble-out {
+  background: var(--bubble-out-bg);
+  background-attachment: fixed;
+  color: var(--on-bubble-out);
+}
+
+/* Chat pane: optional wallpaper (light theme only) with white incoming bubbles on top of it. */
+.chat-pane {
+  background: var(--chat);
+}
+:root[data-theme="light"] .chat-pane[data-wallpaper] {
+  background: var(--wallpaper);
+  --bubble-in: #ffffff;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--divider) transparent;
 }
