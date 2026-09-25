@@ -1,11 +1,11 @@
 """Profile, user search and the contact list."""
 
-from sqlalchemy import or_, select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.errors import BadRequest, Conflict, NotFound
-from app.models import Contact, User
+from app.models import Contact, Conversation, ConversationType, Message, User
 from app.services import auth_service, media
 
 AVATAR_MAX_BYTES = 5 * 1024 * 1024
@@ -93,6 +93,31 @@ def add_contact(db: Session, me: User, identifier: str) -> User:
         db.add(Contact(owner_id=me.id, contact_id=target.id))
         db.commit()
     return target
+
+
+def ensure_contact(db: Session, owner_id: int, contact_id: int) -> None:
+    """Saves `contact_id` in `owner_id`'s address book if missing (the caller commits)."""
+    if owner_id != contact_id and db.get(Contact, (owner_id, contact_id)) is None:
+        db.add(Contact(owner_id=owner_id, contact_id=contact_id))
+
+
+def link_contacts(db: Session, user_a: int, user_b: int) -> None:
+    """Two people who have exchanged messages know each other: save each in the other's contacts."""
+    ensure_contact(db, user_a, user_b)
+    ensure_contact(db, user_b, user_a)
+
+
+def backfill_direct_contacts(db: Session) -> None:
+    """One-off catch-up at startup for chats that predate `link_contacts`. Safe to repeat."""
+    has_messages = exists().where(Message.conversation_id == Conversation.id)
+    chats = db.scalars(
+        select(Conversation).where(Conversation.type == ConversationType.DIRECT, has_messages)
+    )
+    for chat in chats:
+        ids = [member.user_id for member in chat.members]
+        if len(ids) == 2:
+            link_contacts(db, ids[0], ids[1])
+    db.commit()
 
 
 def remove_contact(db: Session, me: User, contact_id: int) -> None:

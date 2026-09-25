@@ -70,6 +70,7 @@ export function ProfileForm() {
       <TextField
         id="display-name"
         autoFocus
+        maxLength={64}
         disabled={busy}
         label="Your name"
         placeholder="First and last name"

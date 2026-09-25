@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type CSSProperties, useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import { useConversation } from "@/hooks/useConversations";
 import { useUiStore } from "@/stores/ui";
@@ -16,6 +16,8 @@ export function ChatView({ conversationId }: { conversationId: number }) {
   const router = useRouter();
   const { conversation, isLoading } = useConversation(conversationId);
   const setActiveConversation = useUiStore((state) => state.setActiveConversation);
+  const pushToast = useUiStore((state) => state.pushToast);
+  const hadConversation = useRef(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -35,8 +37,16 @@ export function ChatView({ conversationId }: { conversationId: number }) {
 
   // The conversation vanished (unknown id, or I was removed from the group).
   useEffect(() => {
-    if (!isLoading && !conversation) router.replace("/chats");
-  }, [isLoading, conversation, router]);
+    hadConversation.current = false; // a different chat: start fresh
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (conversation) hadConversation.current = true;
+    if (isLoading || conversation) return;
+    // Seen it before => I left it or was removed; never seen => bad link.
+    pushToast(hadConversation.current ? "You are no longer in this chat" : "Chat not found");
+    router.replace("/chats");
+  }, [isLoading, conversation, router, pushToast]);
 
   if (!conversation) return <div className="bg-chat h-full flex-1" />;
 

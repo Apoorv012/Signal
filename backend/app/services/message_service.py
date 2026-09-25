@@ -20,7 +20,7 @@ from app.models import (
 )
 from app.realtime import notifier
 from app.realtime.manager import manager
-from app.services import attachment_service, queries, receipts
+from app.services import attachment_service, queries, receipts, user_service
 
 
 def _kind_for(mime_type: str) -> MessageKind:
@@ -108,6 +108,9 @@ def send_message(
     conversation.last_message_at = now
     sender_member = queries.require_member(db, conversation_id, sender.id)
     sender_member.last_read_message_id = message.id  # your own message is never "unread" to you
+
+    if conversation.type == ConversationType.DIRECT and recipients:
+        user_service.link_contacts(db, sender.id, recipients[0])  # a message makes you contacts
 
     delivered = receipts.mark_delivered(db, message, manager.online_user_ids())
     db.commit()

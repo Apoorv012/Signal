@@ -15,8 +15,9 @@ from app.api.routes import ws
 from app.core.config import settings
 from app.core.errors import AppError
 from app.db.base import Base
-from app.db.session import engine
+from app.db.session import engine, session_scope
 from app.realtime.manager import manager
+from app.services import user_service
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ async def lifespan(_app: FastAPI):
         from app.seed.seed import seed_if_empty
 
         seed_if_empty()
+    with session_scope() as db:
+        user_service.backfill_direct_contacts(db)
     yield
 
 

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/TextField";
 import { ContactRow } from "@/features/conversations/ContactRow";
@@ -19,7 +20,7 @@ import {
 } from "@/lib/api/conversations";
 import { removeConversation, upsertConversation } from "@/lib/query/cache";
 import { useUiStore } from "@/stores/ui";
-import type { Conversation } from "@/types";
+import type { Conversation, Member } from "@/types";
 
 import { MemberRow } from "./MemberRow";
 
@@ -44,10 +45,13 @@ export function GroupInfoModal() {
   const [view, setView] = useState<View>("info");
   const [picked, setPicked] = useState<number[]>([]);
   const [title, setTitle] = useState<string>();
+  const [confirm, setConfirm] = useState<"leave" | Member | null>(null);
 
   if (!conversation) return null;
   const isAdmin = conversation.myRole === "admin";
   const editedTitle = title ?? conversation.title;
+  const newTitle = editedTitle.trim();
+  const canSaveTitle = isAdmin && newTitle !== "" && newTitle !== conversation.title;
 
   /** Runs an API call, stores the returned conversation, and reports errors as toasts. */
   const run = async (action: () => Promise<Conversation | null>, success?: string) => {
@@ -118,24 +122,31 @@ export function GroupInfoModal() {
   return (
     <Modal title="Group info" onClose={closeModal}>
       <div className="flex flex-col gap-3 p-4">
-        <TextField
-          id="group-title"
-          label="Group name"
-          value={editedTitle}
-          disabled={!isAdmin}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        {isAdmin && editedTitle.trim() && editedTitle.trim() !== conversation.title && (
-          <Button
-            variant="secondary"
-            className="self-start"
-            onClick={() =>
-              run(() => updateConversation(conversation.id, { title: editedTitle.trim() }))
-            }
-          >
-            Save name
-          </Button>
-        )}
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (canSaveTitle)
+              void run(
+                () => updateConversation(conversation.id, { title: newTitle }),
+                "Group name updated",
+              );
+          }}
+        >
+          <TextField
+            id="group-title"
+            label="Group name"
+            maxLength={100}
+            value={editedTitle}
+            disabled={!isAdmin}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          {canSaveTitle && (
+            <Button type="submit" variant="secondary" className="self-start">
+              Save name
+            </Button>
+          )}
+        </form>
 
         <label className="flex items-center justify-between gap-3 text-[1rem]">
           <span className="text-text">Disappearing messages</span>
@@ -184,17 +195,43 @@ export function GroupInfoModal() {
                   ),
                 )
               }
-              onRemove={() => run(() => removeMember(conversation.id, member.user.id))}
+              onRemove={() => setConfirm(member)}
             />
           ))}
         </ul>
       </div>
 
       <div className="border-divider border-t p-4">
-        <Button variant="danger" fullWidth onClick={() => void leave()}>
+        <Button variant="danger" fullWidth onClick={() => setConfirm("leave")}>
           Leave group
         </Button>
       </div>
+
+      {confirm === "leave" && (
+        <ConfirmDialog
+          title="Leave group?"
+          message={`You will no longer receive messages from "${conversation.title}".`}
+          confirmLabel="Leave"
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            setConfirm(null);
+            void leave();
+          }}
+        />
+      )}
+      {confirm && confirm !== "leave" && (
+        <ConfirmDialog
+          title={`Remove ${confirm.user.displayName}?`}
+          message={`They will be removed from "${conversation.title}".`}
+          confirmLabel="Remove"
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            const { id } = confirm.user;
+            setConfirm(null);
+            void run(() => removeMember(conversation.id, id));
+          }}
+        />
+      )}
     </Modal>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { logout, verifyOtp } from "@/lib/api/auth";
+import { clearPendingPhone, readPendingPhone } from "@/lib/pendingPhone";
 import { useSessionStore } from "@/stores/session";
 
 /** Verification is mocked on the server: every number receives the same fixed code. */
@@ -14,11 +15,18 @@ export const DEMO_OTP = "123456";
 
 export function VerifyForm() {
   const router = useRouter();
-  const phone = useSearchParams().get("phone");
+  const [phone, setPhone] = useState<string | null>(null);
   const setSession = useSessionStore((state) => state.setSession);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+
+  // The number comes from the register step (kept out of the URL); without it, start over.
+  useEffect(() => {
+    const saved = readPendingPhone();
+    if (saved) setPhone(saved);
+    else router.replace("/register");
+  }, [router]);
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -29,6 +37,7 @@ export function VerifyForm() {
       const previous = useSessionStore.getState().token;
       const result = await verifyOtp(phone, code);
       if (previous) await logout().catch(() => undefined); // still uses the old token
+      clearPendingPhone();
       setSession(result.token, result.user);
       // New accounts finish onboarding by choosing a name and photo.
       router.replace(result.isNewUser ? "/profile" : "/chats");

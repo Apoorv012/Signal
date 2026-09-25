@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Icon } from "@/components/icons/Icon";
 import { IconButton } from "@/components/ui/IconButton";
@@ -11,7 +11,7 @@ import { useTypingBroadcast } from "@/hooks/useTyping";
 import { AttachmentTray } from "./AttachmentTray";
 
 /**
- * Message input row.
+ * Message input row. Enter sends on desktop (Shift+Enter = new line); on the phone Enter is a new line.
  * Desktop: [emoji] [ input ] [sticker] [mic|send] [+]
  * iPhone:  [+] [ input · sticker ] [camera] [mic|send]   (the + turns into a close button when open)
  */
@@ -22,13 +22,21 @@ export function Composer({ conversationId }: { conversationId: number }) {
   const { send } = useSendMessage(conversationId);
   const { onInput, stop } = useTypingBroadcast(conversationId);
   const canSend = text.trim().length > 0;
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Desktop: opening a chat lets you start typing straight away (not on the phone, where it
   // would pop the keyboard open over the messages).
   useEffect(() => {
     if (window.matchMedia("(min-width: 768px)").matches) inputRef.current?.focus();
   }, [conversationId]);
+
+  // Grow with the text (CSS max-height caps it; beyond that the box scrolls).
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
 
   const submit = () => {
     if (!canSend) return;
@@ -70,25 +78,38 @@ export function Composer({ conversationId }: { conversationId: number }) {
         />
 
         <form
-          className="bg-field flex h-11 min-w-0 flex-1 items-center rounded-full px-4 md:h-[2.4rem]"
+          className="bg-field flex min-h-11 min-w-0 flex-1 items-center rounded-[1.375rem] px-4 md:min-h-[2.4rem]"
           onSubmit={(event) => {
             event.preventDefault();
             submit();
           }}
         >
-          <input
+          <textarea
             ref={inputRef}
+            rows={1}
+            maxLength={5000}
             value={text}
             onChange={(event) => {
               setText(event.target.value);
               if (event.target.value) onInput();
               else stop();
             }}
+            onKeyDown={(event) => {
+              const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing &&
+                isDesktop
+              ) {
+                event.preventDefault();
+                submit();
+              }
+            }}
             onBlur={stop}
             placeholder="Message"
             autoComplete="off"
-            enterKeyHint="send"
-            className="text-text placeholder:text-secondary min-w-0 flex-1 bg-transparent text-[1.0625rem] outline-none md:text-[1rem]"
+            className="text-text placeholder:text-secondary max-h-40 min-w-0 flex-1 resize-none scrollbar-thin self-center bg-transparent py-[0.6875rem] text-[1.0625rem] leading-[1.3] outline-none md:py-[0.5rem] md:text-[1rem]"
           />
           <Icon name="sticker" size={26} className="text-text ml-2 md:hidden" />
         </form>

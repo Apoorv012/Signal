@@ -62,6 +62,7 @@ export function NewGroupModal() {
           <TextField
             id="group-name"
             autoFocus
+            maxLength={100}
             label="Group name (required)"
             value={name}
             onChange={(e) => setName(e.target.value)}

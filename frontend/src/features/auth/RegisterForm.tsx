@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { PhoneField, usePhoneInput } from "@/components/ui/PhoneField";
 import { requestOtp } from "@/lib/api/auth";
+import { savePendingPhone } from "@/lib/pendingPhone";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -19,7 +20,8 @@ export function RegisterForm() {
     setBusy(true);
     try {
       await requestOtp(phone.e164);
-      router.push(`/verify?phone=${encodeURIComponent(phone.e164)}`);
+      savePendingPhone(phone.e164);
+      router.push("/verify");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
       setBusy(false);

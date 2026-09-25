@@ -30,6 +30,18 @@ function buildUrl(path: string, query: RequestOptions["query"]): string {
   return url.toString();
 }
 
+/** Turns an error body into text. FastAPI validation errors (422) carry an array in `detail`. */
+function errorMessage(payload: unknown, fallback: string): string {
+  const detail = (payload as { detail?: unknown } | null)?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail) && detail.length > 0) {
+    const { loc, msg } = detail[0] as { loc?: unknown[]; msg?: string };
+    const field = loc?.[loc.length - 1];
+    if (msg) return typeof field === "string" ? `${field}: ${msg}` : msg;
+  }
+  return fallback;
+}
+
 /** Thin fetch wrapper: JSON in/out, bearer token, and errors as ApiError with the server message. */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, form, query, anonymous } = options;
@@ -62,8 +74,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    const detail = typeof payload?.detail === "string" ? payload.detail : response.statusText;
-    throw new ApiError(response.status, detail);
+    throw new ApiError(response.status, errorMessage(payload, response.statusText));
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;

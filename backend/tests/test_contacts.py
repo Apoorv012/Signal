@@ -32,3 +32,46 @@ def test_user_search_excludes_self_and_needs_two_chars(alice, bob, carol):
     assert "Alice" not in [
         u["displayName"] for u in alice.get("/api/users/search", params={"q": "Al"}).json()
     ]
+
+
+def _contact_names(account):
+    return [c["displayName"] for c in account.get("/api/contacts").json()]
+
+
+def test_direct_message_makes_both_people_contacts(alice, bob, dm):
+    assert _contact_names(alice) == [] and _contact_names(bob) == []
+    alice.send(dm, "hi")
+    assert _contact_names(alice) == ["Bob"]
+    assert _contact_names(bob) == ["Alice"]
+    alice.send(dm, "again")  # idempotent: no duplicate rows, no error
+    assert _contact_names(bob) == ["Alice"]
+
+
+def test_opening_a_chat_without_messages_adds_no_contacts(alice, bob, dm):
+    assert _contact_names(alice) == [] and _contact_names(bob) == []
+
+
+def test_group_messages_do_not_create_contacts(alice, bob, carol, group):
+    alice.send(group, "hello group")
+    assert _contact_names(bob) == []
+
+
+def test_messaged_person_can_be_added_to_a_group(alice, bob, carol, dm):
+    bob.send(dm, "hey")  # Bob messages Alice, who never added him
+    group = alice.post("/api/conversations/group", json={"title": "Us", "memberIds": [bob.id]})
+    assert group.status_code == 201
+
+
+def test_backfill_adds_contacts_for_existing_chats(alice, bob, dm):
+    from app.db.session import session_scope
+    from app.models import Contact
+    from app.services import user_service
+
+    alice.send(dm, "hi")
+    with session_scope() as db:
+        db.query(Contact).delete()
+        db.commit()
+        user_service.backfill_direct_contacts(db)
+        user_service.backfill_direct_contacts(db)  # repeatable
+    assert _contact_names(alice) == ["Bob"]
+    assert _contact_names(bob) == ["Alice"]

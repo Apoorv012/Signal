@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { TextField } from "@/components/ui/TextField";
 import { useCurrentUser } from "@/hooks/useSession";
 import { logout } from "@/lib/api/auth";
@@ -23,6 +24,7 @@ export function AccountCard() {
   const pushToast = useUiStore((state) => state.pushToast);
   const [name, setName] = useState(me.displayName);
   const [about, setAbout] = useState(me.about);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
   const dirty = name.trim() !== me.displayName || about !== me.about;
 
   const save = async () => {
@@ -52,12 +54,14 @@ export function AccountCard() {
       </div>
       <TextField
         id="profile-name"
+        maxLength={64}
         label="Name"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
       <TextField
         id="profile-about"
+        maxLength={140}
         label="About"
         value={about}
         onChange={(e) => setAbout(e.target.value)}
@@ -66,10 +70,19 @@ export function AccountCard() {
         <Button disabled={!dirty || !name.trim()} onClick={() => void save()}>
           Save
         </Button>
-        <Button variant="secondary" onClick={() => void signOut()}>
+        <Button variant="secondary" onClick={() => setConfirmingLogout(true)}>
           Log out
         </Button>
       </div>
+      {confirmingLogout && (
+        <ConfirmDialog
+          title="Log out?"
+          message="You will need to verify your number again to sign back in."
+          confirmLabel="Log out"
+          onCancel={() => setConfirmingLogout(false)}
+          onConfirm={() => void signOut()}
+        />
+      )}
     </div>
   );
 }

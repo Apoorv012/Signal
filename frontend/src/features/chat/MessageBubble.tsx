@@ -1,7 +1,7 @@
 import clsx from "clsx";
 
 import { Avatar } from "@/components/ui/Avatar";
-import { HighlightedText } from "@/components/ui/HighlightedText";
+import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import type { Message, User } from "@/types";
 
 import { FileContent } from "./content/FileContent";
@@ -125,11 +125,11 @@ export function MessageBubble({
           {(message.kind === "text" || (isImage && hasBody)) && (
             <p
               className={clsx(
-                "text-[1.0625rem] leading-[1.3] break-words whitespace-pre-wrap md:text-[1rem]",
+                "text-[1.0625rem] leading-[1.3] [overflow-wrap:anywhere] whitespace-pre-wrap md:text-[1rem]",
                 isImage && "px-3.5 py-2 md:px-[0.9rem] md:py-[0.6rem]",
               )}
             >
-              <HighlightedText text={message.body} query={highlight} />
+              <LinkifiedText text={message.body} query={highlight} />
               <span className="float-right mt-[0.5625rem] ml-3">{meta}</span>
             </p>
           )}
