@@ -1,6 +1,6 @@
 """Conversations: direct chats, groups, membership and per-user settings."""
 
-from sqlalchemy import select
+from sqlalchemy import exists, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.clock import utcnow
@@ -10,6 +10,7 @@ from app.models import (
     ConversationMember,
     ConversationType,
     MemberRole,
+    Message,
     User,
 )
 from app.realtime import notifier
@@ -29,12 +30,18 @@ def _timer_label(seconds: int) -> str:
 
 
 def list_conversations(db: Session, user_id: int) -> list[Conversation]:
-    """Conversations the user is in, most recent activity first."""
+    """Conversations the user is in, most recent activity first.
+
+    A one-to-one chat only appears once it has a message: merely opening "New message" with
+    someone must not show up in their list (or yours) until something is actually sent.
+    """
+    has_messages = exists().where(Message.conversation_id == Conversation.id, queries.is_visible())
     return list(
         db.scalars(
             select(Conversation)
             .join(ConversationMember, ConversationMember.conversation_id == Conversation.id)
             .where(ConversationMember.user_id == user_id, ConversationMember.left_at.is_(None))
+            .where(or_(Conversation.type != ConversationType.DIRECT, has_messages))
             .order_by(Conversation.last_message_at.desc(), Conversation.id.desc())
         )
     )
@@ -82,7 +89,7 @@ def create_direct(db: Session, user: User, peer_id: int) -> Conversation:
     )
     db.add(conversation)
     db.commit()
-    notifier.conversation_updated(db, conversation, [peer.id])
+    # No notification yet: the peer learns about the chat when the first message is sent.
     return conversation
 
 

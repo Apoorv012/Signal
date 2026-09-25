@@ -55,6 +55,7 @@ export type IconName =
   | "device-laptop"
   | "link"
   | "raise_hand-fill-light"
+  | "pin"
   | "color"
   | "help-light"
   | "bell-ring-fill-light"
@@ -78,6 +79,8 @@ interface IconProps {
   width?: number;
   height?: number;
   className?: string;
+  /** Accessible name (also shown as a tooltip). Omit for purely decorative icons. */
+  label?: string;
 }
 
 /** Sizes are given in px at the 16px root and scale with the root font size (larger on desktop). */
@@ -86,11 +89,14 @@ const toRem = (px: number) => `${px / 16}rem`;
 /**
  * Renders an SVG as a CSS mask so it inherits `currentColor` (text-* utilities recolour it).
  */
-export function Icon({ name, size = 24, width, height, className }: IconProps) {
+export function Icon({ name, size = 24, width, height, className, label }: IconProps) {
   const url = `url(/icons/${name}.svg)`;
   return (
     <span
-      aria-hidden
+      role={label ? "img" : undefined}
+      aria-label={label}
+      title={label}
+      aria-hidden={label ? undefined : true}
       className={clsx("inline-block shrink-0 bg-current", className)}
       style={{
         width: toRem(width ?? size),

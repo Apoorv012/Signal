@@ -4,36 +4,44 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/TextField";
-
-const MIN_DIGITS = 7;
+import { PhoneField, usePhoneInput } from "@/components/ui/PhoneField";
+import { requestOtp } from "@/lib/api/auth";
 
 export function RegisterForm() {
   const router = useRouter();
-  const [phone, setPhone] = useState("");
-  const digits = phone.replace(/\D/g, "");
-  const valid = digits.length >= MIN_DIGITS;
+  const phone = usePhoneInput();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (valid) router.push(`/verify?phone=${encodeURIComponent(phone.trim())}`);
+    if (!phone.valid || busy) return;
+    setBusy(true);
+    try {
+      await requestOtp(phone.e164);
+      router.push(`/verify?phone=${encodeURIComponent(phone.e164)}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+      setBusy(false);
+    }
   };
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <TextField
-        id="phone"
-        type="tel"
-        inputMode="tel"
-        autoFocus
+      <PhoneField
+        state={phone}
         label="Phone number"
-        placeholder="+1 555 123 4567"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
+        error={error}
+        disabled={busy}
+        autoFocus
+        onChange={() => setError(undefined)}
       />
-      <Button type="submit" fullWidth disabled={!valid}>
-        Next
+      <Button type="submit" fullWidth disabled={!phone.valid || busy}>
+        {busy ? "Sending…" : "Next"}
       </Button>
+      <p className="text-secondary text-center text-[0.8125rem]">
+        Demo accounts: +1 555 000 0001 (Riley) or +1 555 000 0002 (Maya)
+      </p>
     </form>
   );
 }

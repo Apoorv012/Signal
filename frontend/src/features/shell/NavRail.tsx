@@ -7,8 +7,9 @@ import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { useConversations } from "@/hooks/useConversations";
-import { useCurrentUser } from "@/hooks/useMessages";
+import { useComingSoon } from "@/hooks/useComingSoon";
+import { useTotalUnread } from "@/hooks/useConversations";
+import { useCurrentUser } from "@/hooks/useSession";
 
 interface NavItem {
   href: string;
@@ -26,14 +27,15 @@ const NAV_ITEMS: NavItem[] = [
 /** Desktop-only left rail: section navigation, settings and the profile avatar. */
 export function NavRail() {
   const pathname = usePathname();
-  const { pinned, others } = useConversations();
-  const unreadChats = [...pinned, ...others].filter((c) => c.unreadCount > 0).length;
+  const unreadChats = useTotalUnread();
   const me = useCurrentUser();
+  const soon = useComingSoon();
 
   return (
     <nav className="bg-rail border-divider hidden w-24 shrink-0 flex-col items-center border-r py-4 md:flex">
       <button
         aria-label="Menu"
+        onClick={soon("Menu")}
         className="text-text hover:bg-hover mb-4 flex size-12 items-center justify-center rounded-xl"
       >
         <Icon name="menu" size={24} />

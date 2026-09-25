@@ -32,11 +32,9 @@ export function formatTimerShort(seconds: number): string {
   return `${seconds}s`;
 }
 
-/** Human label for a disappearing-messages timer. */
-export function formatTimerLabel(seconds: number): string {
-  if (seconds >= DAY / 1000)
-    return `${Math.round(seconds / (DAY / 1000))} day${seconds >= 2 * (DAY / 1000) ? "s" : ""}`;
-  if (seconds >= 3600) return `${Math.round(seconds / 3600)} hour${seconds >= 7200 ? "s" : ""}`;
-  if (seconds >= 60) return `${Math.round(seconds / 60)} minutes`;
-  return `${seconds} seconds`;
+/** "Last seen 5m ago", "Last seen 9:30 AM", "Last seen Tue". */
+export function formatLastSeen(iso: string, now: Date = new Date()): string {
+  const stamp = formatTimestamp(iso, now);
+  if (stamp === "Now") return "Last seen just now";
+  return stamp.endsWith("m") ? `Last seen ${stamp} ago` : `Last seen ${stamp}`;
 }

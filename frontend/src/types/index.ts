@@ -1,28 +1,39 @@
-/** Domain types shared by hooks and components. They mirror the backend API DTOs. */
+/** Domain types. They mirror the backend API DTOs (camelCase) 1:1. */
 
 export interface User {
-  id: string;
+  id: number;
+  phone: string;
+  username: string | null;
   displayName: string;
-  avatarUrl?: string;
+  /** False until onboarding's name step is done (displayName then falls back to the phone). */
+  hasProfile: boolean;
+  about: string;
+  avatarUrl: string | null;
   /** Colour used for the sender name in group chats. */
   nameColor: string;
+  lastSeenAt: string | null;
+  isOnline: boolean;
 }
 
 export type ConversationType = "direct" | "group" | "note_to_self";
+export type MemberRole = "admin" | "member";
 
-/** sending exists only on the client (optimistic send); the rest come from the server. */
-export type MessageStatus = "sending" | "sent" | "delivered" | "read";
+/** "sending" / "failed" exist only on the client (optimistic send); the rest come from the server. */
+export type MessageStatus = "sending" | "failed" | "sent" | "delivered" | "read";
 
 export type MessageKind = "text" | "image" | "file" | "voice" | "system";
 
 export interface Attachment {
-  url?: string;
-  fileName?: string;
-  sizeLabel?: string;
+  id: number;
+  url: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sizeLabel: string;
+  width: number | null;
+  height: number | null;
   /** Voice notes: duration in seconds. */
-  durationSec?: number;
-  width?: number;
-  height?: number;
+  durationSec: number | null;
 }
 
 export interface Reaction {
@@ -32,50 +43,85 @@ export interface Reaction {
 }
 
 export interface QuotedMessage {
-  id: string;
+  id: number;
   senderName: string;
   preview: string;
 }
 
 export interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
+  id: number;
+  conversationId: number;
+  senderId: number | null;
   kind: MessageKind;
   body: string;
   createdAt: string; // ISO 8601
+  expiresAt: string | null;
   /** Only meaningful for messages sent by the current user. */
   status: MessageStatus;
-  attachment?: Attachment;
-  replyTo?: QuotedMessage;
+  /** Set on my own messages; links an optimistic message to the server's copy. */
+  clientId: string | null;
+  attachment: Attachment | null;
+  replyTo: QuotedMessage | null;
   reactions: Reaction[];
 }
 
-export interface LastMessagePreview {
+export interface LastMessage {
   kind: MessageKind;
   text: string;
-  senderName?: string;
+  senderName: string | null;
   createdAt: string;
   /** Set when the last message was sent by me (shows the receipt icon in the list). */
-  status?: MessageStatus;
+  status: MessageStatus | null;
 }
 
 /** Per-chat look: Signal lets each conversation pick its own bubble colour / wallpaper. */
 export interface ChatTheme {
   bubbleBackground: string;
-  wallpaper?: string;
+  wallpaper: string | null;
+}
+
+export interface Member {
+  user: User;
+  role: MemberRole;
 }
 
 export interface Conversation {
-  id: string;
+  id: number;
   type: ConversationType;
   title: string;
-  avatarUrl?: string;
+  avatarUrl: string | null;
   isPinned: boolean;
+  isMuted: boolean;
   unreadCount: number;
-  lastMessage: LastMessagePreview;
-  /** Seconds; undefined when disappearing messages are off. */
-  disappearingSeconds?: number;
-  theme?: ChatTheme;
-  memberIds: string[];
+  /** Time of the last activity (message, system event or creation): the list sort key. */
+  lastActivityAt: string;
+  lastMessage: LastMessage | null;
+  /** Seconds; null when disappearing messages are off. */
+  disappearingSeconds: number | null;
+  theme: ChatTheme | null;
+  members: Member[];
+  myRole: MemberRole;
 }
+
+export interface AuthResult {
+  token: string;
+  user: User;
+  isNewUser: boolean;
+}
+
+/** Server -> client WebSocket events (see backend/app/realtime/events.py). */
+export type RealtimeEvent =
+  | { type: "message.created"; data: Message }
+  | {
+      type: "message.status";
+      data: { messageId: number; conversationId: number; status: MessageStatus };
+    }
+  | {
+      type: "reaction.updated";
+      data: { messageId: number; conversationId: number; reactions: Reaction[] };
+    }
+  | { type: "conversation.updated"; data: Conversation }
+  | { type: "conversation.removed"; data: { conversationId: number } }
+  | { type: "typing"; data: { conversationId: number; userId: number; isTyping: boolean } }
+  | { type: "presence"; data: { userId: number; isOnline: boolean; lastSeenAt: string } }
+  | { type: "pong"; data: Record<string, never> };

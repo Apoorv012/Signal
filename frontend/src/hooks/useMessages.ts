@@ -1,16 +1,42 @@
-import { MESSAGES } from "@/mocks/messages";
-import { USERS } from "@/mocks/users";
-import type { Message, User } from "@/types";
+"use client";
 
-/** Messages of one conversation, oldest first. */
-export function useMessages(conversationId: string): Message[] {
-  return MESSAGES[conversationId] ?? [];
-}
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
-export function useUser(id: string): User | undefined {
-  return USERS[id];
-}
+import { listMessages, PAGE_SIZE } from "@/lib/api/messages";
+import { type MessagesPage, queryKeys } from "@/lib/query/keys";
+import type { Message } from "@/types";
 
-export function useCurrentUser(): User {
-  return USERS.me;
+const NONE: Message[] = [];
+
+/** Message history of one conversation (oldest first) with "load older" pagination. */
+export function useMessages(conversationId: number) {
+  const queryClient = useQueryClient();
+  const key = queryKeys.messages(conversationId);
+
+  const query = useQuery({
+    queryKey: key,
+    queryFn: async (): Promise<MessagesPage> => {
+      const items = await listMessages(conversationId);
+      return { items, hasMore: items.length === PAGE_SIZE };
+    },
+  });
+
+  const loadOlder = useCallback(async () => {
+    const page = queryClient.getQueryData<MessagesPage>(key);
+    const oldest = page?.items.find((m) => m.id > 0);
+    if (!page?.hasMore || !oldest) return;
+    const older = await listMessages(conversationId, oldest.id);
+    queryClient.setQueryData<MessagesPage>(key, {
+      items: [...older, ...page.items],
+      hasMore: older.length === PAGE_SIZE,
+    });
+  }, [queryClient, key, conversationId]);
+
+  return {
+    messages: query.data?.items ?? NONE,
+    hasMore: query.data?.hasMore ?? false,
+    isLoading: query.isLoading,
+    loadOlder,
+  };
 }

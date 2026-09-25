@@ -22,7 +22,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
     >
       <span
         className={clsx(
-          "absolute top-0.5 size-6 rounded-full bg-white shadow transition-transform",
+          "absolute top-0.5 left-0 size-6 rounded-full bg-white shadow transition-transform",
           checked ? "translate-x-[1.375rem]" : "translate-x-0.5",
         )}
       />

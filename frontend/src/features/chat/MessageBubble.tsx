@@ -19,6 +19,7 @@ interface MessageBubbleProps {
   showAvatar: boolean;
   isRunStart: boolean;
   showTimer: boolean;
+  onRetry: (message: Message) => void;
 }
 
 /** One chat message: avatar gutter (groups), bubble with kind-specific content, reactions. */
@@ -31,17 +32,18 @@ export function MessageBubble({
   showAvatar,
   isRunStart,
   showTimer,
+  onRetry,
 }: MessageBubbleProps) {
   const meta = <MessageMeta message={message} outgoing={outgoing} showTimer={showTimer} />;
   const hasBody = message.body.length > 0;
-  const isImage = message.kind === "image";
+  const isImage = message.kind === "image" && message.attachment !== null;
 
   return (
     <div
       className={clsx(
         "flex items-end gap-2 px-4 md:px-5",
         outgoing ? "justify-end" : "justify-start",
-        isRunStart ? "mt-3" : "mt-[0.125rem]",
+        isRunStart ? "mt-3 md:mt-5" : "mt-[0.125rem]",
       )}
     >
       {!outgoing && isGroup && (
@@ -92,12 +94,12 @@ export function MessageBubble({
             </div>
           )}
 
-          {message.kind === "voice" && message.attachment?.durationSec !== undefined && (
+          {message.kind === "voice" && message.attachment && (
             <>
               <VoiceContent
-                durationSec={message.attachment.durationSec}
+                attachment={message.attachment}
                 outgoing={outgoing}
-                seed={message.id.length}
+                seed={message.attachment.id}
               />
               <div className="flex justify-end pt-1">{meta}</div>
             </>
@@ -125,6 +127,16 @@ export function MessageBubble({
         </div>
 
         <ReactionPills reactions={message.reactions} outgoing={outgoing} />
+
+        {message.status === "failed" && (
+          <button
+            type="button"
+            onClick={() => onRetry(message)}
+            className="text-danger mt-1 text-[0.8125rem] font-medium"
+          >
+            Not sent · Tap to retry
+          </button>
+        )}
       </div>
     </div>
   );

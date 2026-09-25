@@ -27,6 +27,7 @@
   --danger: #e33b3b;
   --control-in: #ffffff; /* play button / file card on incoming bubbles */
   --name-lighten: 0%; /* sender-name colours are lightened in dark mode for contrast */
+  color-scheme: light; /* native controls (dropdowns, scrollbars) follow the theme */
   --wallpaper: transparent;
   --bubble-out-bg: var(--bubble-out);
 }
@@ -47,6 +48,7 @@
   --note-bg: #3a2e63;
   --note-fg: #c7b6ff;
   --reaction-bg: #3b3b3b;
+  color-scheme: dark;
   --control-in: #4a4a4a;
   --name-lighten: 45%;
 }

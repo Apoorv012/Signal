@@ -3,6 +3,7 @@ import type { MessageStatus } from "@/types";
 
 const ICON_BY_STATUS: Record<MessageStatus, IconName> = {
   sending: "messagestatus-sending",
+  failed: "error-circle-compact",
   sent: "messagestatus-sent",
   delivered: "messagestatus-delivered",
   read: "messagestatus-read",

@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/IconButton";
 import { Menu } from "@/components/ui/Menu";
-import { useCurrentUser } from "@/hooks/useMessages";
+import { useComingSoon } from "@/hooks/useComingSoon";
+import { useCurrentUser } from "@/hooks/useSession";
 import { useUiStore } from "@/stores/ui";
 
 /** Desktop shows "Chats" left-aligned with compose/more; iPhone centres it between avatar and actions. */
 export function ConversationListHeader() {
   const me = useCurrentUser();
   const router = useRouter();
+  const soon = useComingSoon();
   const openModal = useUiStore((state) => state.openModal);
 
   return (
@@ -45,7 +47,7 @@ export function ConversationListHeader() {
 
       {/* iPhone actions */}
       <div className="flex items-center gap-1 md:hidden">
-        <IconButton icon="camera" label="Camera" />
+        <IconButton icon="camera" label="Camera" onClick={soon("Camera")} />
         <IconButton icon="edit" label="New chat" onClick={() => openModal("new-chat")} />
       </div>
     </header>

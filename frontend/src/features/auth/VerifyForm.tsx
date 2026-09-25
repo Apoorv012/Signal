@@ -6,32 +6,49 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
+import { logout, verifyOtp } from "@/lib/api/auth";
+import { useSessionStore } from "@/stores/session";
 
-/** Verification is mocked: every number receives the same fixed code. */
+/** Verification is mocked on the server: every number receives the same fixed code. */
 export const DEMO_OTP = "123456";
 
 export function VerifyForm() {
   const router = useRouter();
-  const phone = useSearchParams().get("phone") ?? "your number";
+  const phone = useSearchParams().get("phone");
+  const setSession = useSessionStore((state) => state.setSession);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (code === DEMO_OTP) router.push("/profile");
-    else setError("That code is incorrect");
+    if (!phone || code.length !== 6 || busy) return;
+    setBusy(true);
+    try {
+      // Going back to fix a wrong number leaves a half-registered session behind: revoke it.
+      const previous = useSessionStore.getState().token;
+      const result = await verifyOtp(phone, code);
+      if (previous) await logout().catch(() => undefined); // still uses the old token
+      setSession(result.token, result.user);
+      // New accounts finish onboarding by choosing a name and photo.
+      router.replace(result.isNewUser ? "/profile" : "/chats");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
+      setBusy(false);
+    }
   };
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
       <p className="text-secondary text-center text-[0.9375rem]">
-        Code sent to {phone}. Demo code: <b className="text-text">{DEMO_OTP}</b>
+        Code sent to {phone ?? "your number"}. Demo code: <b className="text-text">{DEMO_OTP}</b>
       </p>
       <TextField
         id="otp"
         inputMode="numeric"
         autoComplete="one-time-code"
         autoFocus
+        disabled={busy}
         maxLength={6}
         placeholder="------"
         className="text-center text-[1.5rem] tracking-[0.5em]"
@@ -42,8 +59,8 @@ export function VerifyForm() {
           setCode(e.target.value.replace(/\D/g, ""));
         }}
       />
-      <Button type="submit" fullWidth disabled={code.length !== 6}>
-        Verify
+      <Button type="submit" fullWidth disabled={code.length !== 6 || busy || !phone}>
+        {busy ? "Verifying…" : "Verify"}
       </Button>
       <Link href="/register" className="text-unread text-center text-[0.9375rem]">
         Wrong number?

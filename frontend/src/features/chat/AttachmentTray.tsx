@@ -1,6 +1,7 @@
-import { Icon, type IconName } from "@/components/icons/Icon";
+"use client";
 
-const RECENT_PHOTOS = ["/mock/photo-dad.jpg", "/mock/photo-soup.jpg", "/mock/family.jpg"];
+import { Icon, type IconName } from "@/components/icons/Icon";
+import { useComingSoon } from "@/hooks/useComingSoon";
 
 const ACTIONS: { label: string; icon?: IconName; text?: string }[] = [
   { label: "Photos", icon: "photo-square" },
@@ -9,26 +10,18 @@ const ACTIONS: { label: string; icon?: IconName; text?: string }[] = [
   { label: "Contact", icon: "person" },
 ];
 
-/** Panel opened by the + button: recent photos and attachment actions. Wired up in Phase 4. */
+/** Panel opened by the + button. Photos and File are wired to real uploads in the attachments step. */
 export function AttachmentTray() {
+  const soon = useComingSoon();
+
   return (
     <div className="shrink-0 px-4 pt-3 pb-4 md:px-6">
-      <div className="flex scrollbar-thin gap-3 overflow-x-auto pb-3">
-        {RECENT_PHOTOS.map((src) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={src}
-            src={src}
-            alt=""
-            className="size-40 shrink-0 rounded-[1.375rem] object-cover md:size-32"
-          />
-        ))}
-      </div>
       <div className="flex scrollbar-thin gap-4 overflow-x-auto">
         {ACTIONS.map((action) => (
           <button
             key={action.label}
             type="button"
+            onClick={soon(action.label)}
             className="text-secondary flex shrink-0 flex-col items-center gap-1.5"
           >
             <span className="bg-field text-text flex h-14 w-[5.5rem] items-center justify-center rounded-full md:w-16">

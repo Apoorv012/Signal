@@ -97,3 +97,37 @@ def test_disappearing_timer_posts_a_system_message(alice, dm):
     messages = alice.get(f"/api/conversations/{dm}/messages").json()
     assert messages[-1]["kind"] == "system"
     assert "1 day" in messages[-1]["body"]
+
+
+def test_direct_chat_stays_hidden_until_the_first_message(alice, bob):
+    conversation_id = alice.post("/api/conversations/direct", json={"userId": bob.id}).json()["id"]
+    # Opened but nothing sent: invisible to both people, though still reachable by id.
+    assert conversation_id not in [c["id"] for c in alice.get("/api/conversations").json()]
+    assert conversation_id not in [c["id"] for c in bob.get("/api/conversations").json()]
+    assert alice.get(f"/api/conversations/{conversation_id}").status_code == 200
+
+    alice.send(conversation_id, "hello")
+    assert conversation_id in [c["id"] for c in alice.get("/api/conversations").json()]
+    assert conversation_id in [c["id"] for c in bob.get("/api/conversations").json()]
+
+
+def test_empty_groups_and_note_to_self_are_listed(alice, bob):
+    group = alice.post(
+        "/api/conversations/group", json={"title": "New", "memberIds": [bob.id]}
+    ).json()
+    listed = {c["id"]: c["type"] for c in bob.get("/api/conversations").json()}
+    assert listed[group["id"]] == "group"
+    assert "note_to_self" in [c["type"] for c in alice.get("/api/conversations").json()]
+
+
+def test_list_is_ordered_by_last_activity_and_exposes_it(alice, bob, carol):
+    with_bob = alice.post("/api/conversations/direct", json={"userId": bob.id}).json()["id"]
+    with_carol = alice.post("/api/conversations/direct", json={"userId": carol.id}).json()["id"]
+    alice.send(with_bob, "one")
+    alice.send(with_carol, "two")
+    listing = alice.get("/api/conversations").json()
+    stamps = [c["lastActivityAt"] for c in listing]
+    assert stamps == sorted(stamps, reverse=True)
+    assert [c["id"] for c in listing][:2] == [with_carol, with_bob]
+    # An untouched Note to Self sorts by when it was created, i.e. below active chats.
+    assert listing[-1]["type"] == "note_to_self"

@@ -1,9 +1,12 @@
-import { USERS } from "@/mocks/users";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+
+import { listContacts } from "@/lib/api/users";
+import { queryKeys } from "@/lib/query/keys";
 import type { User } from "@/types";
 
-/** Contacts of the current user (everyone but me), alphabetical. Phase 3: GET /contacts. */
-export function useContacts(): User[] {
-  return Object.values(USERS)
-    .filter((user) => user.id !== "me")
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+export function useContacts(): { contacts: User[]; isLoading: boolean } {
+  const query = useQuery({ queryKey: queryKeys.contacts, queryFn: listContacts });
+  return { contacts: query.data ?? [], isLoading: query.isLoading };
 }

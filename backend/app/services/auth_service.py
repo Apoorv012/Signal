@@ -13,25 +13,28 @@ from app.core.security import generate_token, hash_token
 from app.models import AuthSession, User
 from app.services import conversation_service
 
-_PHONE_RE = re.compile(r"^\+?\d{7,15}$")
+_PHONE_RE = re.compile(r"^\+\d{7,15}$")  # E.164: "+", country code, number
 
 
 def normalize_phone(raw: str) -> str:
     """ "+1 (555) 123-4567" -> "+15551234567"."""
     cleaned = re.sub(r"[\s\-().]", "", raw)
+    if not cleaned.startswith("+"):
+        # Never guess a country code: "5550000001" is not "+5550000001".
+        raise BadRequest("Include the country code, e.g. +1 555 123 4567")
     if not _PHONE_RE.match(cleaned):
         raise BadRequest("Enter a valid phone number, e.g. +1 555 123 4567")
-    return cleaned if cleaned.startswith("+") else f"+{cleaned}"
+    return cleaned
 
 
 def verify_otp(db: Session, phone: str, code: str) -> tuple[str, User, bool]:
-    """Returns (token, user, is_new_user)."""
+    """Returns (token, user, needs_profile): needs_profile is True until a name has been set."""
     normalized = normalize_phone(phone)
     if code != settings.fixed_otp:
         raise BadRequest("That code is incorrect")
 
     user = db.scalar(select(User).where(User.phone == normalized))
-    is_new = user is None
+    created = user is None
     if user is None:
         user = User(phone=normalized)
         db.add(user)
@@ -47,7 +50,7 @@ def verify_otp(db: Session, phone: str, code: str) -> tuple[str, User, bool]:
         )
     )
     db.commit()
-    return token, user, is_new
+    return token, user, created or not user.display_name
 
 
 def user_from_token(db: Session, token: str) -> User:

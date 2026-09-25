@@ -10,6 +10,8 @@ class UserOut(CamelModel):
     phone: str
     username: str | None
     display_name: str
+    # False until the onboarding profile step is done (display_name then falls back to the phone).
+    has_profile: bool
     about: str
     avatar_url: str | None
     name_color: str

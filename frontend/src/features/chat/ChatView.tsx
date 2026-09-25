@@ -1,29 +1,38 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useRouter } from "next/navigation";
+import { type CSSProperties, useEffect } from "react";
 
 import { useConversation } from "@/hooks/useConversations";
+import { useUiStore } from "@/stores/ui";
 
 import { ChatHeader } from "./ChatHeader";
 import { Composer } from "./Composer";
 import { MessageList } from "./MessageList";
 
 /** Full conversation pane. Per-chat colours are applied as CSS variables on the wrapper. */
-export function ChatView({ conversationId }: { conversationId: string }) {
-  const conversation = useConversation(conversationId);
+export function ChatView({ conversationId }: { conversationId: number }) {
+  const router = useRouter();
+  const { conversation, isLoading } = useConversation(conversationId);
+  const setActiveConversation = useUiStore((state) => state.setActiveConversation);
 
-  if (!conversation) {
-    return (
-      <div className="text-secondary flex flex-1 items-center justify-center">
-        Conversation not found
-      </div>
-    );
-  }
+  // Incoming messages in the open chat are read immediately (no unread badge, no toast).
+  useEffect(() => {
+    setActiveConversation(conversationId);
+    return () => setActiveConversation(null);
+  }, [conversationId, setActiveConversation]);
+
+  // The conversation vanished (unknown id, or I was removed from the group).
+  useEffect(() => {
+    if (!isLoading && !conversation) router.replace("/chats");
+  }, [isLoading, conversation, router]);
+
+  if (!conversation) return <div className="bg-chat h-full flex-1" />;
 
   const { theme } = conversation;
   const style = {
     "--bubble-out-bg": theme?.bubbleBackground,
-    "--wallpaper": theme?.wallpaper,
+    "--wallpaper": theme?.wallpaper ?? undefined,
   } as CSSProperties;
 
   return (
@@ -34,7 +43,7 @@ export function ChatView({ conversationId }: { conversationId: string }) {
     >
       <ChatHeader conversation={conversation} />
       <MessageList conversation={conversation} />
-      <Composer />
+      <Composer conversationId={conversation.id} />
     </section>
   );
 }

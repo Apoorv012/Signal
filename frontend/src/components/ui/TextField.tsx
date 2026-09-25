@@ -17,7 +17,7 @@ export function TextField({ label, error, className, id, ...rest }: TextFieldPro
       <input
         id={id}
         className={clsx(
-          "bg-field text-text placeholder:text-secondary h-12 rounded-xl px-4 text-[1rem] outline-none focus:ring-2",
+          "bg-field text-text placeholder:text-secondary h-12 rounded-xl px-4 text-[1rem] outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60",
           error ? "ring-danger/70 ring-2" : "focus:ring-unread/60",
           className,
         )}

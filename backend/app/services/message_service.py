@@ -8,7 +8,15 @@ from sqlalchemy.orm import Session
 
 from app.core.clock import utcnow
 from app.core.errors import BadRequest, NotFound
-from app.models import Conversation, Message, MessageKind, MessageReceipt, Reaction, User
+from app.models import (
+    Conversation,
+    ConversationType,
+    Message,
+    MessageKind,
+    MessageReceipt,
+    Reaction,
+    User,
+)
 from app.realtime import notifier
 from app.realtime.manager import manager
 from app.services import attachment_service, queries, receipts
@@ -103,10 +111,22 @@ def send_message(
     delivered = receipts.mark_delivered(db, message, manager.online_user_ids())
     db.commit()
 
+    if conversation.type == ConversationType.DIRECT and _is_first_message(db, message):
+        # The chat has been invisible to the other person until now: introduce it first.
+        notifier.conversation_updated(db, conversation)
     notifier.message_created(db, message)
     if delivered:
         notifier.message_status(message)
     return message
+
+
+def _is_first_message(db: Session, message: Message) -> bool:
+    earlier = db.scalar(
+        select(Message.id)
+        .where(Message.conversation_id == message.conversation_id, Message.id < message.id)
+        .limit(1)
+    )
+    return earlier is None
 
 
 def create_system_message(db: Session, conversation: Conversation, body: str) -> Message:

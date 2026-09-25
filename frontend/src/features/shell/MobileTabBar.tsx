@@ -6,13 +6,12 @@ import { usePathname } from "next/navigation";
 
 import { Icon } from "@/components/icons/Icon";
 import { Badge } from "@/components/ui/Badge";
-import { useConversations } from "@/hooks/useConversations";
+import { useTotalUnread } from "@/hooks/useConversations";
 
 /** iPhone-style bottom tabs (Chats / Stories). Hidden on desktop and inside a conversation. */
 export function MobileTabBar() {
   const pathname = usePathname();
-  const { pinned, others } = useConversations();
-  const unreadChats = [...pinned, ...others].filter((c) => c.unreadCount > 0).length;
+  const unreadChats = useTotalUnread();
 
   const insideConversation = /^\/chats\/[^/]+/.test(pathname);
   if (insideConversation) return null;

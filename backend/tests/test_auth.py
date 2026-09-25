@@ -11,12 +11,35 @@ def test_invalid_phone_is_rejected(client):
     assert response.status_code == 400
 
 
-def test_phone_is_normalised_so_formats_map_to_one_account(client):
+def test_phone_formatting_is_normalised_to_one_account(client):
     first = client.post("/api/auth/verify-otp", json={"phone": "+1 (555) 000-7777", "code": OTP})
-    second = client.post("/api/auth/verify-otp", json={"phone": "15550007777", "code": OTP})
-    assert first.json()["isNewUser"] is True
-    assert second.json()["isNewUser"] is False
+    second = client.post("/api/auth/verify-otp", json={"phone": "+15550007777", "code": OTP})
     assert first.json()["user"]["id"] == second.json()["user"]["id"]
+
+
+def test_number_without_country_code_is_rejected_not_guessed(client):
+    """ "5550000001" must not silently become the different account "+5550000001"."""
+    for path in ("/api/auth/request-otp", "/api/auth/verify-otp"):
+        response = client.post(path, json={"phone": "5550000001", "code": OTP})
+        assert response.status_code == 400
+        assert "country code" in response.json()["detail"]
+
+
+def test_profile_step_is_required_until_a_name_is_set(client):
+    def login():
+        return client.post(
+            "/api/auth/verify-otp", json={"phone": "+15550007778", "code": OTP}
+        ).json()
+
+    first = login()
+    assert first["isNewUser"] is True and first["user"]["hasProfile"] is False
+    # Abandoning onboarding (e.g. wrong number) and logging in again still asks for a name.
+    assert login()["isNewUser"] is True
+
+    headers = {"Authorization": f"Bearer {first['token']}"}
+    client.patch("/api/me", json={"displayName": "Dana"}, headers=headers)
+    again = login()
+    assert again["isNewUser"] is False and again["user"]["hasProfile"] is True
 
 
 def test_new_user_gets_note_to_self(alice):

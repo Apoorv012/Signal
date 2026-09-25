@@ -1,20 +1,51 @@
-import { CONVERSATIONS } from "@/mocks/conversations";
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+
+import { getConversation, listConversations } from "@/lib/api/conversations";
+import { queryKeys } from "@/lib/query/keys";
 import type { Conversation } from "@/types";
 
-/**
- * Conversation list, most recent activity first, pinned chats grouped on top.
- * Phase 1 serves fixtures; Phase 3 swaps the body for a TanStack Query call.
- */
-export function useConversations(): { pinned: Conversation[]; others: Conversation[] } {
-  const sorted = [...CONVERSATIONS].sort(
-    (a, b) => Date.parse(b.lastMessage.createdAt) - Date.parse(a.lastMessage.createdAt),
-  );
+/** All conversations (server order: newest activity first), split into pinned and the rest. */
+export function useConversations() {
+  const query = useQuery({ queryKey: queryKeys.conversations, queryFn: listConversations });
+  const all = query.data;
+
+  return useMemo(() => {
+    const list = all ?? [];
+    return {
+      all: list,
+      pinned: list.filter((c) => c.isPinned),
+      others: list.filter((c) => !c.isPinned),
+      isLoading: query.isLoading,
+    };
+  }, [all, query.isLoading]);
+}
+
+export function useConversation(id: number): {
+  conversation: Conversation | undefined;
+  isLoading: boolean;
+} {
+  const { all, isLoading: listLoading } = useConversations();
+  const inList = all.find((c) => c.id === id);
+
+  // A one-to-one chat with no messages yet is not in the list (the server hides it until the
+  // first message), but you can still be looking at it right after starting it: load it by id.
+  const fallback = useQuery({
+    queryKey: ["conversation", id],
+    queryFn: () => getConversation(id),
+    enabled: !listLoading && !inList,
+    retry: false,
+  });
+
   return {
-    pinned: sorted.filter((c) => c.isPinned),
-    others: sorted.filter((c) => !c.isPinned),
+    conversation: inList ?? fallback.data,
+    isLoading: listLoading || (!inList && fallback.isLoading),
   };
 }
 
-export function useConversation(id: string): Conversation | undefined {
-  return CONVERSATIONS.find((c) => c.id === id);
+export function useTotalUnread(): number {
+  const { all } = useConversations();
+  return all.filter((c) => c.unreadCount > 0 && !c.isMuted).length;
 }

@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
 
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useConversations } from "@/hooks/useConversations";
@@ -19,17 +20,34 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+function matches(conversation: Conversation, query: string): boolean {
+  const q = query.toLowerCase();
+  return (
+    conversation.title.toLowerCase().includes(q) ||
+    conversation.lastMessage?.text.toLowerCase().includes(q) === true ||
+    conversation.members.some((m) => m.user.phone.includes(q))
+  );
+}
+
 /**
  * Left column. On mobile it is a full screen that gives way to the chat route;
  * on desktop it is a fixed-width column next to the chat pane.
  */
 export function ConversationList() {
   const { conversationId } = useParams<{ conversationId?: string }>();
-  const { pinned, others } = useConversations();
+  const selectedId = conversationId ? Number(conversationId) : undefined;
+  const { all, pinned, others, isLoading } = useConversations();
+  const [query, setQuery] = useState("");
+
+  const searching = query.trim().length > 0;
+  const results = useMemo(
+    () => (searching ? all.filter((c) => matches(c, query.trim())) : []),
+    [all, query, searching],
+  );
 
   const renderItems = (items: Conversation[]) =>
     items.map((c) => (
-      <ConversationListItem key={c.id} conversation={c} selected={c.id === conversationId} />
+      <ConversationListItem key={c.id} conversation={c} selected={c.id === selectedId} />
     ));
 
   return (
@@ -41,18 +59,35 @@ export function ConversationList() {
     >
       <ConversationListHeader />
       <div className="px-4 pb-2 md:px-4">
-        <SearchInput />
+        <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
 
       <div className="min-h-0 flex-1 scrollbar-thin overflow-y-auto pb-2">
-        {pinned.length > 0 && (
+        {isLoading && (
+          <p className="text-secondary px-6 py-8 text-center text-[0.9375rem]">Loading…</p>
+        )}
+
+        {searching ? (
           <>
-            <SectionLabel>Pinned</SectionLabel>
-            {renderItems(pinned)}
-            <SectionLabel>Chats</SectionLabel>
+            {renderItems(results)}
+            {results.length === 0 && (
+              <p className="text-secondary px-6 py-8 text-center text-[0.9375rem]">
+                No chats match &ldquo;{query.trim()}&rdquo;
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            {pinned.length > 0 && (
+              <>
+                <SectionLabel>Pinned</SectionLabel>
+                {renderItems(pinned)}
+                <SectionLabel>Chats</SectionLabel>
+              </>
+            )}
+            {renderItems(others)}
           </>
         )}
-        {renderItems(others)}
       </div>
     </aside>
   );

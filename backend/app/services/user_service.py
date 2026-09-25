@@ -79,7 +79,7 @@ def list_contacts(db: Session, me: User) -> list[User]:
 def add_contact(db: Session, me: User, identifier: str) -> User:
     """Adds a registered user by phone number or @username. Adding twice is a no-op."""
     identifier = identifier.strip()
-    if identifier.lstrip("+").replace(" ", "").replace("-", "").isdigit():
+    if identifier.startswith("+"):
         target = db.scalar(
             select(User).where(User.phone == auth_service.normalize_phone(identifier))
         )

@@ -33,6 +33,8 @@ class ConversationOut(CamelModel):
     is_pinned: bool
     is_muted: bool
     unread_count: int
+    # Time of the last activity (message, system event or creation): the list sort key.
+    last_activity_at: datetime
     last_message: LastMessageOut | None
     disappearing_seconds: int | None
     theme: ThemeOut | None

@@ -82,3 +82,17 @@ def test_removed_member_is_told_the_conversation_is_gone(alice, bob, carol, grou
     with carol.ws() as carol_ws:
         alice.delete(f"/api/conversations/{group}/members/{carol.id}")
         assert receive_until(carol_ws, "conversation.removed") == {"conversationId": group}
+
+
+def test_new_direct_chat_is_only_pushed_when_the_first_message_is_sent(alice, bob):
+    with bob.ws() as bob_ws:
+        conversation_id = alice.post("/api/conversations/direct", json={"userId": bob.id}).json()[
+            "id"
+        ]
+        alice.send(conversation_id, "first!")
+        # The first event Bob gets is the chat itself, then its message.
+        first = bob_ws.receive_json()
+        while first["type"] == "presence":
+            first = bob_ws.receive_json()
+        assert first["type"] == "conversation.updated" and first["data"]["id"] == conversation_id
+        assert receive_until(bob_ws, "message.created")["body"] == "first!"

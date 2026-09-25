@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -7,20 +9,38 @@ import { Modal } from "@/components/ui/Modal";
 import { TextField } from "@/components/ui/TextField";
 import { ContactRow } from "@/features/conversations/ContactRow";
 import { useContacts } from "@/hooks/useContacts";
+import { createGroup } from "@/lib/api/conversations";
+import { upsertConversation } from "@/lib/query/cache";
 import { useUiStore } from "@/stores/ui";
 
 type Step = "members" | "details";
 
-/** Two-step group creation: pick members, then name the group. */
+/** Two-step group creation: pick members from your contacts, then name the group. */
 export function NewGroupModal() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { openModal, closeModal, pushToast } = useUiStore();
-  const contacts = useContacts();
+  const { contacts } = useContacts();
   const [step, setStep] = useState<Step>("members");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<number[]>([]);
   const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const toggle = (id: string) =>
+  const toggle = (id: number) =>
     setSelected((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+
+  const create = async () => {
+    setBusy(true);
+    try {
+      const group = await createGroup(name.trim(), selected);
+      upsertConversation(queryClient, group);
+      closeModal();
+      router.push(`/chats/${group.id}`);
+    } catch (error) {
+      pushToast(error instanceof Error ? error.message : "Could not create the group");
+      setBusy(false);
+    }
+  };
 
   if (step === "details") {
     return (
@@ -31,13 +51,10 @@ export function NewGroupModal() {
         footer={
           <Button
             fullWidth
-            disabled={name.trim().length === 0}
-            onClick={() => {
-              pushToast(`Group "${name.trim()}" created`);
-              closeModal();
-            }}
+            disabled={name.trim().length === 0 || busy}
+            onClick={() => void create()}
           >
-            Create
+            {busy ? "Creating…" : "Create"}
           </Button>
         }
       >
@@ -76,6 +93,11 @@ export function NewGroupModal() {
           onSelect={() => toggle(user.id)}
         />
       ))}
+      {contacts.length === 0 && (
+        <p className="text-secondary px-4 py-8 text-center text-[0.9375rem]">
+          Add some contacts first to create a group.
+        </p>
+      )}
     </Modal>
   );
 }
