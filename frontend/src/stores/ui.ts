@@ -1,9 +1,16 @@
 import { create } from "zustand";
 
-import type { Message } from "@/types";
+import type { Message, QuotedMessage } from "@/types";
 
 export type ModalId =
-  "new-chat" | "add-contact" | "new-group" | "group-info" | "forward" | "safety-number";
+  | "new-chat"
+  | "add-contact"
+  | "new-group"
+  | "group-info"
+  | "forward"
+  | "safety-number"
+  | "disappearing"
+  | "shortcuts";
 
 export interface Toast {
   id: number;
@@ -32,6 +39,12 @@ export interface JumpTarget {
   query: string;
 }
 
+/** The message being replied to; shown above the composer of that conversation. */
+export interface ReplyDraft {
+  conversationId: number;
+  quote: QuotedMessage;
+}
+
 interface UiState {
   modal: ModalId | null;
   /** Conversation a modal (e.g. group info) refers to. */
@@ -43,7 +56,13 @@ interface UiState {
   selection: { conversationId: number; ids: number[] } | null;
   /** Messages the Forward modal will send. */
   forwardMessages: Message[];
+  replyDraft: ReplyDraft | null;
+  /** Bumped by Ctrl+F: the open chat opens its search bar. */
+  chatSearchRequest: number;
   toasts: Toast[];
+  setReplyDraft: (draft: ReplyDraft) => void;
+  clearReplyDraft: () => void;
+  requestChatSearch: () => void;
   startSelection: (conversationId: number, messageId: number) => void;
   toggleSelected: (messageId: number) => void;
   clearSelection: () => void;
@@ -80,7 +99,12 @@ export const useUiStore = create<UiState>((set, get) => {
     jumpTarget: null,
     selection: null,
     forwardMessages: [],
+    replyDraft: null,
+    chatSearchRequest: 0,
     toasts: [],
+    setReplyDraft: (draft) => set({ replyDraft: draft }),
+    clearReplyDraft: () => set({ replyDraft: null }),
+    requestChatSearch: () => set((state) => ({ chatSearchRequest: state.chatSearchRequest + 1 })),
     startSelection: (conversationId, messageId) =>
       set({ selection: { conversationId, ids: [messageId] } }),
     toggleSelected: (messageId) =>

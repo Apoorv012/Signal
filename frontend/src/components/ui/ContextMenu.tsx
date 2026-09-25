@@ -17,6 +17,8 @@ interface ContextMenuProps {
   x: number;
   y: number;
   items: ContextMenuItem[];
+  /** Content above the items (e.g. the emoji reaction bar); gets `close` to dismiss the menu. */
+  header?: (close: () => void) => React.ReactNode;
   /** Phone: render as a bottom sheet (big touch targets) instead of a popup at the cursor. */
   sheet?: boolean;
   onClose: () => void;
@@ -28,7 +30,7 @@ const EDGE_PX = 8;
  * Small menu opened at the cursor by a right-click. Closes on outside click, Esc, scroll or
  * resize, and is keyboard navigable (arrows + Enter).
  */
-export function ContextMenu({ x, y, items, sheet = false, onClose }: ContextMenuProps) {
+export function ContextMenu({ x, y, items, header, sheet = false, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ left: x, top: y });
   const [active, setActive] = useState(-1);
@@ -118,6 +120,7 @@ export function ContextMenu({ x, y, items, sheet = false, onClose }: ContextMenu
           role="menu"
           className="bg-chat text-text w-full rounded-t-2xl pt-2 pb-[max(env(safe-area-inset-bottom),12px)] shadow-2xl"
         >
+          {header?.(onClose)}
           {buttons}
           <div className="bg-divider my-1 h-px" />
           <button
@@ -140,6 +143,7 @@ export function ContextMenu({ x, y, items, sheet = false, onClose }: ContextMenu
       onContextMenu={(event) => event.preventDefault()}
       className="bg-chat text-text border-divider fixed z-[70] min-w-[13rem] rounded-xl border py-1.5 shadow-2xl"
     >
+      {header?.(onClose)}
       {buttons}
     </div>
   );

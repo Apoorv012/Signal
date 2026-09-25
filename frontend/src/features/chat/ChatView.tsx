@@ -30,6 +30,8 @@ export function ChatView({ conversationId }: { conversationId: number }) {
   const [deleteTarget, setDeleteTarget] = useState<Message[] | null>(null);
   const selecting = selection?.conversationId === conversationId;
   const [searchOpen, setSearchOpen] = useState(false);
+  const chatSearchRequest = useUiStore((state) => state.chatSearchRequest);
+  const clearReplyDraft = useUiStore((state) => state.clearReplyDraft);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Incoming messages in the open chat are read immediately (no unread badge, no toast).
@@ -55,6 +57,17 @@ export function ChatView({ conversationId }: { conversationId: number }) {
       .then((updated) => upsertConversation(queryClient, updated))
       .catch(() => undefined);
   }, [markedUnread, conversationId, queryClient]);
+
+  // Ctrl+F (see KeyboardShortcuts) opens the search bar of the chat on screen.
+  const handledSearchRequest = useRef(chatSearchRequest);
+  useEffect(() => {
+    if (chatSearchRequest === handledSearchRequest.current) return;
+    handledSearchRequest.current = chatSearchRequest;
+    setSearchOpen(true);
+  }, [chatSearchRequest]);
+
+  // A reply draft belongs to one chat.
+  useEffect(() => () => clearReplyDraft(), [conversationId, clearReplyDraft]);
 
   // The search bar belongs to one chat: close it when switching.
   useEffect(() => setSearchOpen(false), [conversationId]);

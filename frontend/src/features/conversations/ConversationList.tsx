@@ -98,7 +98,11 @@ export function ConversationList() {
     >
       <ConversationListHeader />
       <div className="px-4 pb-2 md:px-4">
-        <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} />
+        <SearchInput
+          id="chat-list-search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
       </div>
       {!searching && (
         <div className="flex gap-2 px-4 pb-2" role="group" aria-label="Filter chats">

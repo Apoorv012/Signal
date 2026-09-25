@@ -33,13 +33,14 @@ export function ConversationListHeader() {
 
       {/* Desktop actions */}
       <div className="hidden items-center md:flex">
-        <IconButton icon="compose" label="New chat" onClick={() => openModal("new-chat")} />
+        <IconButton icon="compose" label="New chat (Alt+N)" onClick={() => openModal("new-chat")} />
         <Menu
           icon="more"
           label="More"
           items={[
             { label: "New group", onSelect: () => openModal("new-group") },
             { label: "Add contact", onSelect: () => openModal("add-contact") },
+            { label: "Keyboard shortcuts", onSelect: () => openModal("shortcuts") },
             { label: "Settings", onSelect: () => router.push("/settings") },
           ]}
         />

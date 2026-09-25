@@ -10,6 +10,7 @@ import { ImageContent } from "./content/ImageContent";
 import { VoiceContent } from "./content/VoiceContent";
 import { MessageMeta } from "./MessageMeta";
 import { ReactionPills } from "./ReactionPills";
+import { ReplyQuote } from "./ReplyQuote";
 
 interface MessageBubbleProps {
   message: Message;
@@ -29,6 +30,10 @@ interface MessageBubbleProps {
   selecting?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** Tap on a reaction pill: add / remove my reaction with that emoji. */
+  onReact?: (emoji: string) => void;
+  /** Tap on the quoted message of a reply: jump to the original. */
+  onOpenQuote?: () => void;
   /** Right-click / long-press handlers from `useContextMenu().menuProps`. */
   menuProps?: React.HTMLAttributes<HTMLDivElement>;
   onRetry: (message: Message) => void;
@@ -50,6 +55,8 @@ export function MessageBubble({
   selected,
   onToggleSelect,
   menuProps,
+  onReact,
+  onOpenQuote,
   onRetry,
 }: MessageBubbleProps) {
   const meta = <MessageMeta message={message} outgoing={outgoing} showTimer={showTimer} />;
@@ -121,6 +128,16 @@ export function MessageBubble({
             </p>
           )}
 
+          {message.replyTo && (
+            <div className={clsx(isImage && "px-3 pt-2")}>
+              <ReplyQuote
+                quote={message.replyTo}
+                outgoing={outgoing}
+                onOpen={() => onOpenQuote?.()}
+              />
+            </div>
+          )}
+
           {isImage && message.attachment && (
             <div className="relative">
               <ImageContent attachment={message.attachment} />
@@ -169,7 +186,7 @@ export function MessageBubble({
           )}
         </div>
 
-        <ReactionPills reactions={message.reactions} outgoing={outgoing} />
+        <ReactionPills reactions={message.reactions} outgoing={outgoing} onToggle={onReact} />
 
         {message.status === "failed" && (
           <button

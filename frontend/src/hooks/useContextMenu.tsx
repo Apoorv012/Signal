@@ -10,6 +10,7 @@ interface OpenMenu {
   x: number;
   y: number;
   items: ContextMenuItem[];
+  header?: (close: () => void) => React.ReactNode;
   /** Phone width: shown as a bottom sheet instead of a popup at the cursor. */
   sheet: boolean;
 }
@@ -23,18 +24,21 @@ export function useContextMenu() {
   const [open, setOpen] = useState<OpenMenu | null>(null);
   const { bind } = useLongPress();
 
-  const show = useCallback((x: number, y: number, items: ContextMenuItem[]) => {
-    setOpen({ x, y, items, sheet: window.matchMedia("(max-width: 767px)").matches });
-  }, []);
+  const show = useCallback(
+    (x: number, y: number, items: ContextMenuItem[], header?: OpenMenu["header"]) => {
+      setOpen({ x, y, items, header, sheet: window.matchMedia("(max-width: 767px)").matches });
+    },
+    [],
+  );
 
   const menuProps = useCallback(
-    (items: ContextMenuItem[]) => ({
-      ...bind((point) => show(point.x, point.y, items)),
+    (items: ContextMenuItem[], header?: OpenMenu["header"]) => ({
+      ...bind((point) => show(point.x, point.y, items, header)),
       onContextMenu: (event: React.MouseEvent) => {
         if ((event.target as HTMLElement).closest("input, textarea, [contenteditable=true]"))
           return;
         event.preventDefault();
-        show(event.clientX, event.clientY, items);
+        show(event.clientX, event.clientY, items, header);
       },
     }),
     [bind, show],

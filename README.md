@@ -93,11 +93,11 @@ cd frontend && npm run typecheck && npm run lint && npx prettier --check "src/**
 | Signal look & feel: list + chat layout, bubbles, modals, toasts, settings (toggles are saved per account in localStorage; "Send with Enter" is functional) | Done (polish ongoing) |
 | Dark mode (system / light / dark, persisted) | Done |
 | Responsive (desktop 3-pane, iPhone stacked routes + tab bar) | Done (tested on Windows desktop + iPhone only) |
-| Disappearing messages | Backend done (timer, expiry filter); UI: timer picker in **Group info** only |
-| Attachments (images / files / voice) | Backend done (upload, serve, kinds); **chat UI not built yet** |
-| Reactions | Backend done (one per user, live updates); **picker UI not built yet** |
-| Reply / quoted messages | Backend done; **UI not built yet** |
-| Keyboard shortcuts | Not started |
+| Disappearing messages | Done: timer picker for any chat (header menu → Disappearing messages), messages vanish on screen the moment they expire, the server hides them on fetch and deletes them (and their files) in a 60 s sweep |
+| Attachments | Done: photos and files (+ tray, drag-and-drop, paste, upload preview, caption), full-screen photo viewer, voice messages (microphone needs HTTPS or localhost). 25 MB limit |
+| Reactions | Done: emoji bar in the message menu (❤️ 👍 😂 😮 😢 🙏), tap a pill to add / remove yours, live updates, one per person |
+| Reply / quoted messages | Done: Reply in the message menu, quote strip above the composer (Esc cancels), quote inside the bubble that jumps to the original |
+| Keyboard shortcuts | Done: Alt+N new chat, Ctrl+F search in chat, Ctrl+Shift+F search chats, Alt+↑/↓ switch chat, Ctrl+/ (or ?) cheat sheet, Esc, Enter / Shift+Enter |
 | Voice / video calls, stories, linked devices | Placeholders ("coming soon") as the brief allows |
 | Deployment (Vercel + always-on backend) | Not done |
 

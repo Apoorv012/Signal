@@ -1,5 +1,6 @@
 import { ToastViewport } from "@/components/ui/ToastViewport";
 import { RequireAuth } from "@/features/auth/AuthGuards";
+import { KeyboardShortcuts } from "@/features/shell/KeyboardShortcuts";
 import { MobileTabBar } from "@/features/shell/MobileTabBar";
 import { ModalHost } from "@/features/shell/ModalHost";
 import { NavRail } from "@/features/shell/NavRail";
@@ -17,6 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <MobileTabBar />
           </div>
           <ModalHost />
+          <KeyboardShortcuts />
           <ToastViewport />
         </div>
       </RealtimeProvider>

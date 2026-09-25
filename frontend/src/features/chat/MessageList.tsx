@@ -5,18 +5,22 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ContextMenuItem } from "@/components/ui/ContextMenu";
 import { useContextMenu } from "@/hooks/useContextMenu";
 import { useMarkRead } from "@/hooks/useMarkRead";
+import { useMessageExpiry } from "@/hooks/useMessageExpiry";
+import { useReactions } from "@/hooks/useReactions";
 import { useMessages } from "@/hooks/useMessages";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { useCurrentUser } from "@/hooks/useSession";
 import { useTypingUsers } from "@/hooks/useTyping";
+import { previewText } from "@/lib/chat/preview";
 import { copyText } from "@/lib/clipboard";
 import { findMember } from "@/lib/chat/conversation";
 import { toMessageRows } from "@/lib/chat/grouping";
 import { type JumpTarget, useUiStore } from "@/stores/ui";
-import type { Conversation, Message } from "@/types";
+import type { Conversation, Message, QuotedMessage } from "@/types";
 
 import { EncryptionNotice } from "./EncryptionNotice";
 import { MessageBubble } from "./MessageBubble";
+import { ReactionBar } from "./ReactionBar";
 import { SystemMessage } from "./SystemMessage";
 import { TypingIndicator } from "./TypingIndicator";
 
@@ -55,7 +59,25 @@ export function MessageList({
   const pushToast = useUiStore((state) => state.pushToast);
   const selectedIds = selection?.conversationId === conversation.id ? selection.ids : null;
 
+  const setReplyDraft = useUiStore((state) => state.setReplyDraft);
+  const requestJump = useUiStore((state) => state.requestJump);
+  const { react } = useReactions();
+  useMessageExpiry(conversation.id, messages);
+
+  const quoteOf = (message: Message): QuotedMessage => ({
+    id: message.id,
+    senderName:
+      message.senderId === me.id
+        ? "You"
+        : (findMember(conversation, message.senderId)?.displayName ?? "Signal"),
+    preview: previewText(message),
+  });
+
   const menuItems = (message: Message): ContextMenuItem[] => [
+    {
+      label: "Reply",
+      onSelect: () => setReplyDraft({ conversationId: conversation.id, quote: quoteOf(message) }),
+    },
     {
       label: "Select",
       onSelect: () =>
@@ -180,7 +202,28 @@ export function MessageList({
             selecting={selectedIds !== null && message.id > 0}
             selected={selectedIds?.includes(message.id)}
             onToggleSelect={() => toggleSelected(message.id)}
-            menuProps={message.id > 0 ? menuProps(menuItems(message)) : undefined}
+            menuProps={
+              message.id > 0
+                ? menuProps(menuItems(message), (close) => (
+                    <ReactionBar
+                      current={message.reactions.find((r) => r.reactedByMe)?.emoji}
+                      onPick={(emoji) => {
+                        close();
+                        void react(message, emoji);
+                      }}
+                    />
+                  ))
+                : undefined
+            }
+            onReact={(emoji) => void react(message, emoji)}
+            onOpenQuote={() =>
+              message.replyTo &&
+              requestJump({
+                conversationId: conversation.id,
+                messageId: message.replyTo.id,
+                query: "",
+              })
+            }
             onRetry={retry}
           />
         );

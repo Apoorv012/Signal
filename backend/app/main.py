@@ -18,7 +18,7 @@ from app.db.base import Base
 from app.db.columns import add_missing_columns
 from app.db.session import engine, session_scope
 from app.realtime.manager import manager
-from app.services import user_service
+from app.services import expiry_service, user_service
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,11 @@ async def lifespan(_app: FastAPI):
     with session_scope() as db:
         user_service.backfill_identity_keys(db)
         user_service.backfill_direct_contacts(db)
-    yield
+    sweeper = asyncio.create_task(expiry_service.sweep_forever())
+    try:
+        yield
+    finally:
+        sweeper.cancel()
 
 
 def create_app() -> FastAPI:

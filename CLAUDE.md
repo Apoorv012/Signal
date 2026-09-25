@@ -41,7 +41,7 @@ Deliverables still open: public GitHub repo (frontend/ + backend/), README (done
 ```bash
 # backend (from backend/, venv at backend/.venv)
 .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000   # add --host 0.0.0.0 for phone testing
-.venv\Scripts\python -m pytest -q          # 96 tests, ~10s
+.venv\Scripts\python -m pytest -q          # 99 tests, ~10s
 .venv\Scripts\ruff check . ; .venv\Scripts\ruff format .
 
 # frontend (from frontend/)
@@ -115,7 +115,7 @@ Done and committed/staged: everything in the README's "Feature status" marked Do
 contacts (a direct message auto-saves both people as contacts), DM + group chat with real-time
 delivery/read receipts/typing/presence, group admin controls, message + in-chat search, list filters,
 right-click menus (Phase D below), settings (toggles persist per account in localStorage), dark mode,
-responsive layouts, seed data, 96 backend tests.
+responsive layouts, seed data, 99 backend tests.
 Later additions (unstaged/staged until committed): username + password accounts (phone optional),
 add phone / set password on an existing account, group admin icon buttons with confirmations, linked
 devices (= sessions), simulated E2E (safety numbers).
@@ -131,8 +131,16 @@ checked before the API integration; the integrated app has been used on the user
 
 ## 7. Roadmap (do in this order unless the user says otherwise)
 
-### A. Bonus features (the user wants all of these; disappearing messages is "maybe last")
-The backend endpoints and DTOs already exist; this is mostly frontend work.
+### A. Bonus features — DONE (design notes kept for reference)
+Built: attachments (`Composer` upload + preview + drag/drop/paste, `ImageViewer`, `useVoiceRecorder`),
+reactions (`ReactionBar` in the message menu header, clickable `ReactionPills`, `useReactions`), replies
+(`replyDraft` in `stores/ui.ts`, strip in `Composer`, `ReplyQuote`), keyboard shortcuts
+(`features/shell/KeyboardShortcuts` + `ShortcutsModal`; Ctrl+N is reserved by browsers so new chat is Alt+N),
+disappearing messages (`DisappearingModal`, `useMessageExpiry`, backend `expiry_service` sweep every 60 s).
+Not built from these ideas: hover action bar on desktop (the right-click / long-press menu covers it),
+swipe-to-reply on messages, GIF and Contact attachments (still "coming soon").
+In the browser pane `requestAnimationFrame` does not fire while the pane is hidden, so jump-to-message
+(scroll + flash) cannot be verified when `document.visibilityState` is "hidden".
 
 1. **Attachments** — Composer `+` tray (`features/chat/AttachmentTray.tsx`, currently "coming soon" toasts):
    hidden `<input type="file">` for Photos (image/*) and File → `uploadAttachment` (`lib/api/messages.ts`)

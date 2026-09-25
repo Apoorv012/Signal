@@ -70,6 +70,10 @@ export function ChatHeader({
     ...(conversation.type === "direct"
       ? [{ label: "Safety number", onSelect: () => openModal("safety-number", conversation.id) }]
       : []),
+    {
+      label: "Disappearing messages",
+      onSelect: () => openModal("disappearing", conversation.id),
+    },
     // The header icon is desktop-only; on the phone search lives in this menu.
     { label: "Search", onSelect: onSearch },
     {
@@ -154,7 +158,12 @@ export function ChatHeader({
             onClick={() => pushToast("Voice calls are coming soon")}
           />
         )}
-        <IconButton icon="search" label="Search" className="max-md:hidden" onClick={onSearch} />
+        <IconButton
+          icon="search"
+          label="Search (Ctrl+F)"
+          className="max-md:hidden"
+          onClick={onSearch}
+        />
         <Menu icon="more" label="More" items={menuItems} />
       </div>
     </header>
