@@ -22,11 +22,11 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     icon: "settings",
     rows: [
       { kind: "info", label: "Language", value: "English" },
-      { kind: "info", label: "Linked devices", value: "Coming soon" },
       { kind: "toggle", label: "Open at login", defaultOn: false },
     ],
   },
   { id: "appearance", title: "Appearance", icon: "color", rows: [] },
+  { id: "devices", title: "Linked devices", icon: "device-laptop", rows: [] },
   {
     id: "chats",
     title: "Chats",
@@ -112,7 +112,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     icon: "help-light",
     rows: [
       { kind: "info", label: "Version", value: "Signal Clone 1.0" },
-      { kind: "info", label: "Encryption", value: "Simulated (demo)" },
+      { kind: "info", label: "End-to-end encryption", value: "Simulated (demo)" },
     ],
   },
 ];

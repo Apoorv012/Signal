@@ -4,7 +4,9 @@ from sqlalchemy import exists, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.errors import BadRequest, Conflict, NotFound
+from app.core.security import hash_password, verify_password
 from app.models import Contact, Conversation, ConversationType, Message, User
 from app.services import auth_service, media
 
@@ -23,12 +25,45 @@ def update_profile(
     if about is not None:
         user.about = about
     if username is not None:
+        taken = auth_service.find_by_username(db, username)
+        if taken is not None and taken.id != user.id:
+            raise Conflict("That username is taken")
         user.username = username
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise Conflict("That username is taken") from None
+    return user
+
+
+def attach_phone(db: Session, user: User, phone: str, code: str) -> User:
+    """Adds (or changes) the phone number on this account after the (mocked) OTP check.
+
+    Two existing accounts are never merged: a number that already belongs to another account is
+    refused, so the person has to pick which account to keep.
+    """
+    normalized = auth_service.normalize_phone(phone)
+    if code != settings.fixed_otp:
+        raise BadRequest("That code is incorrect")
+    owner = db.scalar(select(User).where(User.phone == normalized))
+    if owner is not None and owner.id != user.id:
+        raise Conflict("That number already belongs to another account")
+    user.phone = normalized
+    db.commit()
+    return user
+
+
+def set_password(db: Session, user: User, password: str, current_password: str | None) -> User:
+    """Sets or changes the password used for username login (needs a username first)."""
+    if not user.username:
+        raise BadRequest("Choose a username first")
+    if user.password_hash is not None and (
+        not current_password or not verify_password(current_password, user.password_hash)
+    ):
+        raise BadRequest("Your current password is incorrect")
+    user.password_hash = hash_password(password)
+    db.commit()
     return user
 
 
@@ -84,7 +119,7 @@ def add_contact(db: Session, me: User, identifier: str) -> User:
             select(User).where(User.phone == auth_service.normalize_phone(identifier))
         )
     else:
-        target = db.scalar(select(User).where(User.username == identifier.lstrip("@")))
+        target = auth_service.find_by_username(db, identifier.lstrip("@"))
     if target is None:
         raise NotFound("No Signal user found with that number or username")
     if target.id == me.id:
@@ -105,6 +140,15 @@ def link_contacts(db: Session, user_a: int, user_b: int) -> None:
     """Two people who have exchanged messages know each other: save each in the other's contacts."""
     ensure_contact(db, user_a, user_b)
     ensure_contact(db, user_b, user_a)
+
+
+def backfill_identity_keys(db: Session) -> None:
+    """Users created before safety numbers existed get their (simulated) identity key."""
+    import secrets
+
+    for user in db.scalars(select(User).where(User.identity_key.is_(None))):
+        user.identity_key = secrets.token_hex(32)
+    db.commit()
 
 
 def backfill_direct_contacts(db: Session) -> None:

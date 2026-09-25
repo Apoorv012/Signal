@@ -24,12 +24,21 @@ export function AccountCard() {
   const pushToast = useUiStore((state) => state.pushToast);
   const [name, setName] = useState(me.displayName);
   const [about, setAbout] = useState(me.about);
+  const [username, setUsername] = useState(me.username ?? "");
   const [confirmingLogout, setConfirmingLogout] = useState(false);
-  const dirty = name.trim() !== me.displayName || about !== me.about;
+  const usernameChanged = username !== (me.username ?? "");
+  const usernameValid = username === "" || /^[a-zA-Z0-9_.]{3,32}$/.test(username);
+  const dirty = name.trim() !== me.displayName || about !== me.about || usernameChanged;
 
   const save = async () => {
     try {
-      setUser(await updateMe({ displayName: name.trim(), about }));
+      setUser(
+        await updateMe({
+          displayName: name.trim(),
+          about,
+          ...(usernameChanged && username ? { username } : {}),
+        }),
+      );
       pushToast("Profile updated");
     } catch (error) {
       pushToast(error instanceof Error ? error.message : "Could not save profile");
@@ -49,7 +58,9 @@ export function AccountCard() {
         <Avatar name={me.displayName} src={me.avatarUrl} size={64} />
         <div className="min-w-0">
           <p className="text-text truncate text-[1.125rem] font-semibold">{me.displayName}</p>
-          <p className="text-secondary text-[0.9375rem]">{me.phone}</p>
+          <p className="text-secondary text-[0.9375rem]">
+            {me.phone ?? (me.username ? `@${me.username}` : "")}
+          </p>
         </div>
       </div>
       <TextField
@@ -60,6 +71,17 @@ export function AccountCard() {
         onChange={(e) => setName(e.target.value)}
       />
       <TextField
+        id="profile-username"
+        maxLength={32}
+        label="Username"
+        placeholder="Others can add you with @username"
+        autoCapitalize="none"
+        autoCorrect="off"
+        value={username}
+        error={usernameValid ? undefined : "3–32 characters: letters, numbers, . and _"}
+        onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+      />
+      <TextField
         id="profile-about"
         maxLength={140}
         label="About"
@@ -67,7 +89,7 @@ export function AccountCard() {
         onChange={(e) => setAbout(e.target.value)}
       />
       <div className="flex gap-3">
-        <Button disabled={!dirty || !name.trim()} onClick={() => void save()}>
+        <Button disabled={!dirty || !name.trim() || !usernameValid} onClick={() => void save()}>
           Save
         </Button>
         <Button variant="secondary" onClick={() => setConfirmingLogout(true)}>
@@ -77,7 +99,11 @@ export function AccountCard() {
       {confirmingLogout && (
         <ConfirmDialog
           title="Log out?"
-          message="You will need to verify your number again to sign back in."
+          message={
+            me.phone
+              ? "You will need to verify your number again to sign back in."
+              : "You will need your username and password to sign back in."
+          }
           confirmLabel="Log out"
           onCancel={() => setConfirmingLogout(false)}
           onConfirm={() => void signOut()}

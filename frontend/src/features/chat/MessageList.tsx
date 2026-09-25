@@ -15,6 +15,7 @@ import { toMessageRows } from "@/lib/chat/grouping";
 import { type JumpTarget, useUiStore } from "@/stores/ui";
 import type { Conversation, Message } from "@/types";
 
+import { EncryptionNotice } from "./EncryptionNotice";
 import { MessageBubble } from "./MessageBubble";
 import { SystemMessage } from "./SystemMessage";
 import { TypingIndicator } from "./TypingIndicator";
@@ -150,6 +151,8 @@ export function MessageList({
       onScroll={onScroll}
       className="min-h-0 flex-1 scrollbar-thin overflow-y-auto pt-2 pb-3"
     >
+      {!isLoading && !hasMore && <EncryptionNotice conversation={conversation} />}
+
       {!isLoading && messages.length === 0 && (
         <p className="text-secondary px-8 pt-16 text-center text-[0.9375rem]">
           No messages yet. Say hello 👋

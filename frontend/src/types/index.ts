@@ -2,10 +2,13 @@
 
 export interface User {
   id: number;
-  phone: string;
+  /** null for accounts registered with a username instead of a phone number. */
+  phone: string | null;
   username: string | null;
+  /** True when a username + password login is set up. */
+  hasPassword: boolean;
   displayName: string;
-  /** False until onboarding's name step is done (displayName then falls back to the phone). */
+  /** False until onboarding's name step is done (displayName then falls back to the phone / @username). */
   hasProfile: boolean;
   about: string;
   avatarUrl: string | null;
@@ -103,6 +106,23 @@ export interface Conversation {
   theme: ChatTheme | null;
   members: Member[];
   myRole: MemberRole;
+}
+
+/** A place this account is signed in ("linked device"). */
+export interface Device {
+  id: number;
+  name: string;
+  createdAt: string;
+  lastActiveAt: string | null;
+  isCurrent: boolean;
+}
+
+/** Simulated end-to-end encryption: the safety number of a one-to-one chat. */
+export interface SafetyNumber {
+  number: string;
+  verified: boolean;
+  peerName: string;
+  simulated: boolean;
 }
 
 export interface AuthResult {

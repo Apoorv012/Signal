@@ -52,7 +52,7 @@ function matches(conversation: Conversation, query: string): boolean {
   return (
     conversation.title.toLowerCase().includes(q) ||
     conversation.lastMessage?.text.toLowerCase().includes(q) === true ||
-    conversation.members.some((m) => m.user.phone.includes(q))
+    conversation.members.some((m) => m.user.phone?.includes(q) ?? false)
   );
 }
 

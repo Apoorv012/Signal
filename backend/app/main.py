@@ -43,6 +43,7 @@ async def lifespan(_app: FastAPI):
 
         seed_if_empty()
     with session_scope() as db:
+        user_service.backfill_identity_keys(db)
         user_service.backfill_direct_contacts(db)
     yield
 

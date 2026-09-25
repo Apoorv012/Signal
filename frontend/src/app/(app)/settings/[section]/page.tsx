@@ -5,6 +5,8 @@ import { Icon } from "@/components/icons/Icon";
 import { AccountCard } from "@/features/settings/AccountCard";
 import { AppearanceSettings } from "@/features/settings/AppearanceSettings";
 import { SETTINGS_SECTIONS } from "@/features/settings/sections";
+import { LinkedDevices } from "@/features/settings/LinkedDevices";
+import { SignInMethods } from "@/features/settings/SignInMethods";
 import { SettingsRows } from "@/features/settings/SettingsRows";
 
 export default async function SettingsSectionPage({
@@ -32,9 +34,16 @@ export default async function SettingsSectionPage({
       </header>
       <div className="min-h-0 flex-1 scrollbar-thin overflow-y-auto px-4 pb-8 md:px-8">
         <div className="max-w-2xl">
-          {section.id === "general" && <AccountCard />}
+          {section.id === "general" && (
+            <>
+              <AccountCard />
+              <SignInMethods />
+            </>
+          )}
           {section.id === "appearance" ? (
             <AppearanceSettings />
+          ) : section.id === "devices" ? (
+            <LinkedDevices />
           ) : (
             <SettingsRows sectionId={section.id} rows={section.rows} />
           )}

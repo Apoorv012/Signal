@@ -55,7 +55,8 @@ def user_out(user: User) -> UserOut:
         id=user.id,
         phone=user.phone,
         username=user.username,
-        display_name=user.display_name or user.phone,
+        has_password=user.password_hash is not None,
+        display_name=user.fallback_name,
         has_profile=bool(user.display_name),
         about=user.about,
         avatar_url=media_url(user.avatar_path),
@@ -92,7 +93,7 @@ def preview_text(message: Message) -> str:
 
 def _sender_name(db: Session, message: Message) -> str:
     sender = db.get(User, message.sender_id) if message.sender_id else None
-    return (sender.display_name or sender.phone) if sender else "Signal"
+    return sender.fallback_name if sender else "Signal"
 
 
 def message_out(db: Session, message: Message, viewer_id: int) -> MessageOut:
@@ -135,7 +136,7 @@ def _conversation_title_and_avatar(
         return "Note to Self", None
     if conversation.type == ConversationType.DIRECT:
         peer = next((u for u in members if u.id != viewer_id), members[0])
-        return peer.display_name or peer.phone, media_url(peer.avatar_path)
+        return peer.fallback_name, media_url(peer.avatar_path)
     return conversation.title or "Group", media_url(conversation.avatar_path)
 
 

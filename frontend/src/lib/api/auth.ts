@@ -16,4 +16,18 @@ export const verifyOtp = (phone: string, code: string) =>
     anonymous: true,
   });
 
+export const registerWithUsername = (username: string, password: string) =>
+  request<AuthResult>("/auth/register-username", {
+    method: "POST",
+    body: { username, password },
+    anonymous: true,
+  });
+
+export const loginWithUsername = (username: string, password: string) =>
+  request<AuthResult>("/auth/login-username", {
+    method: "POST",
+    body: { username, password },
+    anonymous: true,
+  });
+
 export const logout = () => request<void>("/auth/logout", { method: "POST" });

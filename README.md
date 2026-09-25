@@ -81,13 +81,15 @@ cd frontend && npm run typecheck && npm run lint && npx prettier --check "src/**
 
 | Area | Status |
 | --- | --- |
-| Mock auth: phone (country code + number), fixed OTP, name + avatar, login/logout, persisted session | Done |
+| Auth: phone (country code + number, mocked OTP) **or** username + password ("Use a username instead"); name + avatar onboarding, login/logout, persisted session. A phone account can add a username + password and a username account can add a phone number (accounts are never merged) | Done |
+| Linked devices: every login is listed with a friendly name ("Chrome on Windows"), "This device" badge and last activity; unlink revokes that login. "Link a new device" shows a demo QR + instructions | Done (QR is decorative) |
+| End-to-end encryption: **simulated**. Lock notice in every chat, per-chat 60-digit safety numbers (same for both people, derived from stored demo keys) and a verify toggle. Messages are *not* actually encrypted | Simulated |
 | Conversation list: recency sort, search (chats **and message text**), All / Unread / Groups filter, unread badges, "marked unread" dot, last-message preview, online / last seen, pinned + muted indicators | Done |
 | In-chat search (match counter, next/previous, highlight, jumps to old messages) | Done |
 | Right-click menus (desktop) and touch equivalents (iPhone: long-press opens the same actions as a bottom sheet; chat rows swipe right for Pin / Unread and left for Mute / Delete): chat list (pin, mute, mark unread, clear, delete / leave) and messages (select + multi-select, copy, forward to up to 5 chats, delete for me / for everyone) | Done |
 | Contacts: add by phone / `@username`, searchable everywhere (new chat, new group, add members); anyone you exchange a direct message with is saved automatically. User search, Note to Self | Done |
 | 1:1 messaging: real-time, timestamps, sending → sent → delivered → read, typing indicator, persistence | Done |
-| Groups: create, members, admin add / remove / promote, leave, rename, persistence | Done |
+| Groups: create, members, admin add / remove / promote (icon buttons, each with a confirmation), leave, rename, persistence | Done |
 | Signal look & feel: list + chat layout, bubbles, modals, toasts, settings (toggles are saved per account in localStorage; "Send with Enter" is functional) | Done (polish ongoing) |
 | Dark mode (system / light / dark, persisted) | Done |
 | Responsive (desktop 3-pane, iPhone stacked routes + tab bar) | Done (tested on Windows desktop + iPhone only) |
@@ -185,11 +187,11 @@ erDiagram
 
 | Table | Key columns / notes |
 | --- | --- |
-| `users` | `phone` UNIQUE (E.164), `username` UNIQUE NULL, `display_name` (empty until onboarding step), `about`, `avatar_path`, `last_seen_at` |
-| `sessions` | `token_hash` UNIQUE (SHA-256 of the bearer token), `expires_at`, `revoked_at` (real logout) |
+| `users` | `phone` UNIQUE NULL (E.164; empty for username accounts), `username` UNIQUE NULL (unique ignoring case), `password_hash` NULL (PBKDF2, username accounts), `identity_key` (simulated E2E key), `display_name` (empty until onboarding step), `about`, `avatar_path`, `last_seen_at` |
+| `sessions` | `token_hash` UNIQUE (SHA-256 of the bearer token), `expires_at`, `revoked_at` (real logout), `device_name`, `last_active_at` (these rows are the "linked devices") |
 | `contacts` | PK (`owner_id`, `contact_id`), directional address book |
 | `conversations` | `type` (`direct`/`group`/`note_to_self`), `title`, `direct_key` UNIQUE ("minId:maxId": no duplicate DMs), `disappearing_seconds`, `last_message_at` (indexed, list sort key) |
-| `conversation_members` | PK (`conversation_id`, `user_id`); `role` (admin/member), `joined_at`, `left_at` (soft leave), `last_read_message_id` (unread = newer messages from others), per-user `is_pinned`, `is_muted`, `chat_theme`, `marked_unread`, `cleared_at` ("Clear messages": hides older history for this user only) |
+| `conversation_members` | PK (`conversation_id`, `user_id`); `role` (admin/member), `joined_at`, `left_at` (soft leave), `last_read_message_id` (unread = newer messages from others), per-user `is_pinned`, `is_muted`, `chat_theme`, `marked_unread`, `safety_verified`, `cleared_at` ("Clear messages": hides older history for this user only) |
 | `messages` | `kind` (text/image/file/voice/system), `body`, `reply_to_id` (self FK), `client_id` (idempotency, UNIQUE with `sender_id`), `expires_at` (disappearing), `deleted_at`; index (`conversation_id`, `id`) for paging |
 | `message_hidden` | PK (`message_id`, `user_id`): "Delete for me" |
 | `message_receipts` | PK (`message_id`, `user_id`), `delivered_at`, `read_at` |
@@ -207,12 +209,14 @@ REST under `/api` (bearer token in `Authorization`), full schema at `/docs`.
 
 | Area | Endpoints |
 | --- | --- |
-| Auth | `POST /auth/request-otp` · `POST /auth/verify-otp` → `{token, user, isNewUser}` · `POST /auth/logout` |
-| Profile | `GET/PATCH /me` · `POST /me/avatar` |
+| Auth | `POST /auth/request-otp` · `POST /auth/verify-otp` → `{token, user, isNewUser}` · `POST /auth/register-username` · `POST /auth/login-username` · `POST /auth/logout` |
+| Profile | `GET/PATCH /me` · `POST /me/avatar` · `POST /me/phone` (OTP) · `POST /me/password` |
 | People | `GET /users/search?q=` · `GET/POST /contacts` · `DELETE /contacts/{id}` |
 | Conversations | `GET /conversations` · `POST /conversations/direct` · `POST /conversations/group` · `GET/PATCH /conversations/{id}` · `PATCH /conversations/{id}/me` (pin / mute / mark unread / theme) · `POST /conversations/{id}/clear` |
 | Members | `POST /conversations/{id}/members` · `DELETE/PATCH /conversations/{id}/members/{userId}` (admin only; anyone may remove themselves) |
 | Messages | `GET /conversations/{id}/messages?before=&limit=` · `POST /conversations/{id}/messages` · `POST /conversations/{id}/read` · `GET /messages/search?q=&conversationId=` · `POST /messages/delete` (`{messageIds, forEveryone}`; for everyone = own messages, 24 h) |
+| Devices | `GET /devices` · `DELETE /devices/{id}` (unlink; not the current one) |
+| Encryption (simulated) | `GET /conversations/{id}/safety-number` · `POST /conversations/{id}/safety-number/verify` |
 | Reactions | `PUT/DELETE /messages/{id}/reaction` |
 | Attachments | `POST /attachments` (multipart); files are served from `/media/…` |
 

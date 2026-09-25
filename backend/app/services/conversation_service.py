@@ -18,7 +18,7 @@ from app.services import message_service, queries
 
 
 def _display(user: User) -> str:
-    return user.display_name or user.phone
+    return user.fallback_name
 
 
 def _timer_label(seconds: int) -> str:

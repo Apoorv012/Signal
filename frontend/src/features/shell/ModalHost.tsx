@@ -2,6 +2,7 @@
 
 import { AddContactModal } from "@/features/conversations/AddContactModal";
 import { NewChatModal } from "@/features/conversations/NewChatModal";
+import { SafetyNumberModal } from "@/features/chat/SafetyNumberModal";
 import { ForwardModal } from "@/features/chat/ForwardModal";
 import { GroupInfoModal } from "@/features/groups/GroupInfoModal";
 import { NewGroupModal } from "@/features/groups/NewGroupModal";
@@ -15,5 +16,6 @@ export function ModalHost() {
   if (modal === "new-group") return <NewGroupModal />;
   if (modal === "group-info") return <GroupInfoModal />;
   if (modal === "forward") return <ForwardModal />;
+  if (modal === "safety-number") return <SafetyNumberModal />;
   return null;
 }

@@ -67,6 +67,9 @@ export function ChatHeader({
     ...(isGroup
       ? [{ label: "Group info", onSelect: () => openModal("group-info", conversation.id) }]
       : []),
+    ...(conversation.type === "direct"
+      ? [{ label: "Safety number", onSelect: () => openModal("safety-number", conversation.id) }]
+      : []),
     // The header icon is desktop-only; on the phone search lives in this menu.
     { label: "Search", onSelect: onSearch },
     {

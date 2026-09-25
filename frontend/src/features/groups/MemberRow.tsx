@@ -1,3 +1,4 @@
+import { Icon, type IconName } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import type { Member } from "@/types";
 
@@ -10,8 +11,33 @@ interface MemberRowProps {
   onRemove: () => void;
 }
 
+function ActionButton({
+  icon,
+  label,
+  className,
+  onClick,
+}: {
+  icon: IconName;
+  label: string;
+  className: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={`hover:bg-hover flex size-9 items-center justify-center rounded-lg transition-colors ${className}`}
+    >
+      <Icon name={icon} size={22} />
+    </button>
+  );
+}
+
 export function MemberRow({ member, isMe, canManage, onToggleAdmin, onRemove }: MemberRowProps) {
   const { user, role } = member;
+  const isAdmin = role === "admin";
   return (
     <li className="flex items-center gap-3 px-4 py-2.5">
       <Avatar name={user.displayName} src={user.avatarUrl} size={44} />
@@ -20,16 +46,27 @@ export function MemberRow({ member, isMe, canManage, onToggleAdmin, onRemove }: 
           {user.displayName}
           {isMe && <span className="text-secondary font-normal"> (You)</span>}
         </p>
-        {role === "admin" && <p className="text-secondary text-[0.8125rem]">Admin</p>}
+        {isAdmin && (
+          <p className="text-unread flex items-center gap-1 text-[0.8125rem]">
+            <Icon name="key" size={14} />
+            Admin
+          </p>
+        )}
       </div>
       {canManage && !isMe && (
-        <div className="flex shrink-0 gap-2 text-[0.8125rem] font-medium">
-          <button type="button" onClick={onToggleAdmin} className="text-unread hover:underline">
-            {role === "admin" ? "Remove admin" : "Make admin"}
-          </button>
-          <button type="button" onClick={onRemove} className="text-danger hover:underline">
-            Remove
-          </button>
+        <div className="flex shrink-0 gap-1">
+          <ActionButton
+            icon={isAdmin ? "block" : "key"}
+            label={isAdmin ? "Remove admin" : "Make admin"}
+            className={isAdmin ? "text-secondary" : "text-unread"}
+            onClick={onToggleAdmin}
+          />
+          <ActionButton
+            icon="x-circle"
+            label="Remove from group"
+            className="text-danger"
+            onClick={onRemove}
+          />
         </div>
       )}
     </li>

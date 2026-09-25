@@ -8,6 +8,8 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel: string;
+  /** "danger" (red, default) for destructive actions, "primary" (blue) for the rest. */
+  confirmVariant?: "danger" | "primary";
   /** Optional extra button before the main one (e.g. "Delete for me"). */
   alternateLabel?: string;
   onAlternate?: () => void;
@@ -20,6 +22,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  confirmVariant = "danger",
   alternateLabel,
   onAlternate,
   onConfirm,
@@ -58,7 +61,7 @@ export function ConfirmDialog({
               {alternateLabel}
             </Button>
           )}
-          <Button variant="danger" className="h-10 px-5" autoFocus onClick={onConfirm}>
+          <Button variant={confirmVariant} className="h-10 px-5" autoFocus onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

@@ -8,7 +8,7 @@ export function userMatches(user: User, query: string): boolean {
   return (
     user.displayName.toLowerCase().includes(q) ||
     (user.username?.toLowerCase().includes(q) ?? false) ||
-    (digits.length > 0 && user.phone.replace(/\D/g, "").includes(digits))
+    (digits.length > 0 && (user.phone?.replace(/\D/g, "").includes(digits) ?? false))
   );
 }
 

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models import User
-from app.schemas.user import ContactCreate, ProfileUpdate, UserOut
+from app.schemas.user import AttachPhoneIn, ContactCreate, ProfileUpdate, SetPasswordIn, UserOut
 from app.services import presenters, user_service
 
 router = APIRouter(tags=["users"])
@@ -20,6 +20,21 @@ def update_me(
     body: ProfileUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> UserOut:
     updated = user_service.update_profile(db, user, body.display_name, body.about, body.username)
+    return presenters.user_out(updated)
+
+
+@router.post("/me/phone", response_model=UserOut)
+def attach_phone(
+    body: AttachPhoneIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> UserOut:
+    return presenters.user_out(user_service.attach_phone(db, user, body.phone, body.code))
+
+
+@router.post("/me/password", response_model=UserOut)
+def set_password(
+    body: SetPasswordIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> UserOut:
+    updated = user_service.set_password(db, user, body.password, body.current_password)
     return presenters.user_out(updated)
 
 

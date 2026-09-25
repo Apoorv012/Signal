@@ -63,5 +63,7 @@ class ConversationMember(Base):
     # "Clear messages": history before this moment is hidden from this user only.
     cleared_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
     marked_unread: Mapped[bool] = mapped_column(default=False)
+    # The user compared the (simulated) safety number with the other person and confirmed it.
+    safety_verified: Mapped[bool] = mapped_column(default=False)
 
     conversation: Mapped[Conversation] = relationship(back_populates="members")

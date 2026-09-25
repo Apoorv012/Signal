@@ -35,6 +35,9 @@ const TIMER_OPTIONS = [
 
 type View = "info" | "add";
 
+/** The action waiting for the user's confirmation. */
+type Confirm = { kind: "leave" } | { kind: "remove" | "admin"; member: Member };
+
 /** Group details: rename (admin), disappearing timer, members with admin controls, add, leave. */
 export function GroupInfoModal() {
   const router = useRouter();
@@ -48,7 +51,7 @@ export function GroupInfoModal() {
   const [picked, setPicked] = useState<number[]>([]);
   const [query, setQuery] = useState("");
   const [title, setTitle] = useState<string>();
-  const [confirm, setConfirm] = useState<"leave" | Member | null>(null);
+  const [confirm, setConfirm] = useState<Confirm | null>(null);
 
   if (!conversation) return null;
   const isAdmin = conversation.myRole === "admin";
@@ -197,28 +200,20 @@ export function GroupInfoModal() {
               member={member}
               isMe={member.user.id === me.id}
               canManage={isAdmin}
-              onToggleAdmin={() =>
-                run(() =>
-                  setMemberRole(
-                    conversation.id,
-                    member.user.id,
-                    member.role === "admin" ? "member" : "admin",
-                  ),
-                )
-              }
-              onRemove={() => setConfirm(member)}
+              onToggleAdmin={() => setConfirm({ kind: "admin", member })}
+              onRemove={() => setConfirm({ kind: "remove", member })}
             />
           ))}
         </ul>
       </div>
 
       <div className="border-divider border-t p-4">
-        <Button variant="danger" fullWidth onClick={() => setConfirm("leave")}>
+        <Button variant="danger" fullWidth onClick={() => setConfirm({ kind: "leave" })}>
           Leave group
         </Button>
       </div>
 
-      {confirm === "leave" && (
+      {confirm?.kind === "leave" && (
         <ConfirmDialog
           title="Leave group?"
           message={`You will no longer receive messages from "${conversation.title}".`}
@@ -230,16 +225,46 @@ export function GroupInfoModal() {
           }}
         />
       )}
-      {confirm && confirm !== "leave" && (
+      {confirm?.kind === "remove" && (
         <ConfirmDialog
-          title={`Remove ${confirm.user.displayName}?`}
-          message={`They will be removed from "${conversation.title}".`}
+          title={`Remove ${confirm.member.user.displayName}?`}
+          message={`They will be removed from "${conversation.title}" and stop receiving its messages.`}
           confirmLabel="Remove"
           onCancel={() => setConfirm(null)}
           onConfirm={() => {
-            const { id } = confirm.user;
+            const { id } = confirm.member.user;
             setConfirm(null);
             void run(() => removeMember(conversation.id, id));
+          }}
+        />
+      )}
+      {confirm?.kind === "admin" && (
+        <ConfirmDialog
+          title={
+            confirm.member.role === "admin"
+              ? `Remove ${confirm.member.user.displayName} as admin?`
+              : `Make ${confirm.member.user.displayName} an admin?`
+          }
+          message={
+            confirm.member.role === "admin"
+              ? "They will stay in the group but can no longer add or remove members or change group settings."
+              : "Admins can add and remove members, change the group name and make other admins."
+          }
+          confirmLabel={confirm.member.role === "admin" ? "Remove admin" : "Make admin"}
+          confirmVariant={confirm.member.role === "admin" ? "danger" : "primary"}
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => {
+            const { member } = confirm;
+            setConfirm(null);
+            void run(
+              () =>
+                setMemberRole(
+                  conversation.id,
+                  member.user.id,
+                  member.role === "admin" ? "member" : "admin",
+                ),
+              member.role === "admin" ? "Admin removed" : "Admin added",
+            );
           }}
         />
       )}

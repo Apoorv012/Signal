@@ -2,7 +2,8 @@ import { create } from "zustand";
 
 import type { Message } from "@/types";
 
-export type ModalId = "new-chat" | "add-contact" | "new-group" | "group-info" | "forward";
+export type ModalId =
+  "new-chat" | "add-contact" | "new-group" | "group-info" | "forward" | "safety-number";
 
 export interface Toast {
   id: number;

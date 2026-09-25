@@ -26,6 +26,9 @@ Deliverables still open: public GitHub repo (frontend/ + backend/), README (done
 - **Commit messages have NO `Co-Authored-By` / attribution trailer** (explicit user instruction). Use
   Conventional Commits (`feat:`, `fix:`, …), a subject plus an optional body via a second `-m`.
 - Test targets are **Windows desktop browser and iPhone Safari only**. Tablet just uses the desktop layout.
+- **Never `rm -rf frontend/.next` (or run `npm run build`) while the user's servers are up.** Check
+  `netstat -ano | grep -E ":(3000|8000) .*LISTEN"` first. Their frontend is often `next start` (production build):
+  deleting `.next` breaks it until they rebuild (this happened once).
 - The user tests by running the servers themselves. **Do not leave dev servers running** when you finish
   (they hold ports 3000/8000; the user then gets `WinError 10013`). Stop any server you started.
 - Be honest about verification: say what was actually checked (tests / typecheck / browser) and what was not.
@@ -38,7 +41,7 @@ Deliverables still open: public GitHub repo (frontend/ + backend/), README (done
 ```bash
 # backend (from backend/, venv at backend/.venv)
 .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000   # add --host 0.0.0.0 for phone testing
-.venv\Scripts\python -m pytest -q          # 75 tests, ~10s
+.venv\Scripts\python -m pytest -q          # 96 tests, ~10s
 .venv\Scripts\ruff check . ; .venv\Scripts\ruff format .
 
 # frontend (from frontend/)
@@ -112,7 +115,10 @@ Done and committed/staged: everything in the README's "Feature status" marked Do
 contacts (a direct message auto-saves both people as contacts), DM + group chat with real-time
 delivery/read receipts/typing/presence, group admin controls, message + in-chat search, list filters,
 right-click menus (Phase D below), settings (toggles persist per account in localStorage), dark mode,
-responsive layouts, seed data, 75 backend tests.
+responsive layouts, seed data, 96 backend tests.
+Later additions (unstaged/staged until committed): username + password accounts (phone optional),
+add phone / set password on an existing account, group admin icon buttons with confirmations, linked
+devices (= sessions), simulated E2E (safety numbers).
 Also fixed after two QA passes: long-word bubble overflow, readable 422 errors + input `maxLength`,
 multiline composer (Shift+Enter), confirm dialogs (leave/remove/log out), clickable links, phone number
 kept out of the verify URL (sessionStorage).
@@ -208,6 +214,17 @@ Delete, and a cancel button. Forward opens a chat picker (Signal allows up to 5 
 - Final pre-submission pass: fresh clone → follow README from scratch; `next build` clean; all checks green.
 
 ## 8. Decisions log (so you don't relitigate them)
+
+- **Username accounts**: `users.phone` is nullable; username + password (PBKDF2) via `/auth/register-username` and
+  `/auth/login-username`. Usernames are unique ignoring case. Accounts are NEVER merged: a phone account can
+  add a username/password, a username account can add a phone (OTP) unless another account owns it. Account
+  deletion is not built (ask the user before adding it: destructive).
+- **Linked devices = active sessions** (`device_name` from the User-Agent, `last_active_at`). Unlink revokes.
+- **End-to-end encryption is SIMULATED on purpose**: real E2E would break server-side message search and list
+  previews, and WebCrypto (`crypto.subtle`) does not exist on `http://<lan-ip>` phone testing. We ship safety
+  numbers + verify + lock notices and say "simulated" in the UI and README. Do not present it as real crypto.
+- **DB migrations**: no Alembic. `app/db/columns.py` adds new columns and rebuilds `users` once to drop NOT NULL on
+  `phone` (verified on a copy of the real DB). Add future columns to `ADDED_COLUMNS`.
 
 - Icons copied from Signal-Desktop's icon set (user accepted the AGPL note; credited in README).
 - Seed avatars from randomuser.me / picsum.photos, copied into `backend/app/seed/media`.
