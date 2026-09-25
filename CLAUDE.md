@@ -157,6 +157,24 @@ Known items from user feedback and self-review:
 - Settings toggles are local-only placeholders (by design); consider persisting them in localStorage.
 - Remove dead/unused API helpers only if still unused after Phase A (`getMe`, `removeContact`).
 
+### D. Right-click context menus (user request; do after Phase A, before/with B)
+Replace the browser's default menu with app menus, desktop only (touch keeps long-press). Signal Desktop
+does this: the chat-list menu offers Pin/Unpin, Mark as unread, Mute (duration submenu), Archive and
+Delete; a message has a hover "more" menu (also on right-click) with React, Reply, Forward, Copy, Select,
+Info and Delete ("Delete for me" / "Delete for everyone" within a time limit, own messages only).
+"Select" enters multi-select mode: checkboxes on messages, a footer bar with "N selected", Forward and
+Delete, and a cancel button. Forward opens a chat picker (Signal allows up to 5 chats).
+- **Chat list item:** Pin/Unpin, Mute/Unmute (reuse `updateMySettings`), Mark as unread, Clear messages,
+  Delete chat. "Clear"/"Delete"/"Mark unread" have no backend endpoint yet (per-user `cleared_at` on the
+  member row, mirroring how `joined_at` hides history; leaving/hiding the chat).
+- **Message:** Select, Reply, Copy, Forward, Delete. Multi-select store in `stores/ui.ts` (selected ids +
+  mode); Delete for me needs a per-user hidden-message table; Delete for everyone sets `deleted_at` and
+  pushes a `message.deleted` WebSocket event (handled only in `lib/realtime/handleEvent.ts`).
+  Forward = send a new message with the same body/attachment to each chosen chat (no backend change).
+- Build one reusable `ContextMenu` primitive in `components/ui` (positioned at the cursor, closes on
+  outside click/Esc/scroll, keyboard navigable) and call it from `ConversationListItem` and `MessageBubble`.
+  Keep the default menu on text inputs so paste/spell-check still work.
+
 ### C. Deployment + submission
 - Frontend → **Vercel** (`NEXT_PUBLIC_API_URL` = public https backend URL; the WebSocket URL is derived).
 - Backend → an always-on host (user has free credits, must not spin down). Add a `Dockerfile`
