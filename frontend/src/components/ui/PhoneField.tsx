@@ -1,25 +1,15 @@
 "use client";
 
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Icon } from "@/components/icons/Icon";
-import {
-  COUNTRIES,
-  type Country,
-  DEFAULT_COUNTRY,
-  guessCountry,
-  isValidNumber,
-  toE164,
-} from "@/lib/countries";
+import { COUNTRIES, type Country, DEFAULT_COUNTRY, isValidNumber, toE164 } from "@/lib/countries";
 
 /** State for a phone input: the chosen country, the typed national number, and the E.164 result. */
 export function usePhoneInput() {
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [national, setNational] = useState("");
-
-  // Guess the country from the browser language after mount (avoids a hydration mismatch).
-  useEffect(() => setCountry(guessCountry(navigator.language)), []);
 
   return {
     country,

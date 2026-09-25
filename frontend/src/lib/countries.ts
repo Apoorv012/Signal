@@ -52,13 +52,7 @@ export const COUNTRIES: Country[] = [
   { iso: "CL", name: "Chile", dial: "56" },
 ];
 
-export const DEFAULT_COUNTRY = COUNTRIES[0];
-
-/** Best-effort guess from the browser language ("en-IN" -> India). */
-export function guessCountry(locale: string | undefined): Country {
-  const region = locale?.split("-")[1]?.toUpperCase();
-  return COUNTRIES.find((c) => c.iso === region) ?? DEFAULT_COUNTRY;
-}
+export const DEFAULT_COUNTRY = COUNTRIES.find((c) => c.iso === "IN") ?? COUNTRIES[0];
 
 const MIN_TOTAL_DIGITS = 7;
 const MAX_TOTAL_DIGITS = 15; // E.164
