@@ -74,6 +74,20 @@ def reaction_updated(db: Session, message: Message) -> None:
     )
 
 
+def messages_deleted(db: Session, messages: Iterable[Message]) -> None:
+    """Tell every member which messages vanished, then refresh their list previews."""
+    by_conversation: dict[int, list[int]] = {}
+    for message in messages:
+        by_conversation.setdefault(message.conversation_id, []).append(message.id)
+    for conversation_id, message_ids in by_conversation.items():
+        payload = events.envelope(
+            events.MESSAGE_DELETED, {"conversationId": conversation_id, "messageIds": message_ids}
+        )
+        recipients = queries.active_member_ids(db, conversation_id)
+        manager.dispatch({uid: payload for uid in recipients})
+        conversation_updated(db, queries.get_conversation(db, conversation_id))
+
+
 def conversation_updated(
     db: Session, conversation: Conversation, user_ids: Iterable[int] | None = None
 ) -> None:

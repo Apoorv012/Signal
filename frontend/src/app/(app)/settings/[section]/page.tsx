@@ -36,7 +36,7 @@ export default async function SettingsSectionPage({
           {section.id === "appearance" ? (
             <AppearanceSettings />
           ) : (
-            <SettingsRows rows={section.rows} />
+            <SettingsRows sectionId={section.id} rows={section.rows} />
           )}
         </div>
       </div>

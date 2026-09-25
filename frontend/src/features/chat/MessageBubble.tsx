@@ -1,5 +1,6 @@
 import clsx from "clsx";
 
+import { Icon } from "@/components/icons/Icon";
 import { Avatar } from "@/components/ui/Avatar";
 import { LinkifiedText } from "@/components/ui/LinkifiedText";
 import type { Message, User } from "@/types";
@@ -24,6 +25,11 @@ interface MessageBubbleProps {
   highlight?: string;
   /** Briefly tint the row (a search result was just opened). */
   flash?: boolean;
+  /** Selection mode: shows a check circle and a click toggles the message. */
+  selecting?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onContextMenu?: (event: React.MouseEvent) => void;
   onRetry: (message: Message) => void;
 }
 
@@ -39,6 +45,10 @@ export function MessageBubble({
   showTimer,
   highlight,
   flash,
+  selecting,
+  selected,
+  onToggleSelect,
+  onContextMenu,
   onRetry,
 }: MessageBubbleProps) {
   const meta = <MessageMeta message={message} outgoing={outgoing} showTimer={showTimer} />;
@@ -48,13 +58,35 @@ export function MessageBubble({
   return (
     <div
       data-message-id={message.id}
+      onContextMenu={onContextMenu}
+      // Capture: while selecting, a click anywhere on the row (even on a link) only toggles it.
+      onClickCapture={(event) => {
+        if (!selecting) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onToggleSelect?.();
+      }}
       className={clsx(
-        "flex items-end gap-2 px-4 md:px-5",
+        "relative flex items-end gap-2",
+        selecting ? "cursor-pointer pr-4 pl-11 md:pr-5 md:pl-12" : "px-4 md:px-5",
+        selected && "bg-unread/10",
         flash && "message-flash",
         outgoing ? "justify-end" : "justify-start",
         isRunStart ? "mt-3 md:mt-5" : "mt-[0.125rem]",
       )}
     >
+      {selecting && (
+        <span
+          aria-hidden
+          className={clsx(
+            "absolute top-1/2 left-4 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border-2 md:left-5",
+            selected ? "border-unread bg-unread text-white" : "border-secondary/50",
+          )}
+        >
+          {selected && <Icon name="check" size={16} />}
+        </span>
+      )}
+
       {!outgoing && isGroup && (
         <div className="w-7 shrink-0 self-end">
           {showAvatar && sender && (

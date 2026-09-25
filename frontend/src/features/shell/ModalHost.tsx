@@ -2,6 +2,7 @@
 
 import { AddContactModal } from "@/features/conversations/AddContactModal";
 import { NewChatModal } from "@/features/conversations/NewChatModal";
+import { ForwardModal } from "@/features/chat/ForwardModal";
 import { GroupInfoModal } from "@/features/groups/GroupInfoModal";
 import { NewGroupModal } from "@/features/groups/NewGroupModal";
 import { useUiStore } from "@/stores/ui";
@@ -13,5 +14,6 @@ export function ModalHost() {
   if (modal === "add-contact") return <AddContactModal />;
   if (modal === "new-group") return <NewGroupModal />;
   if (modal === "group-info") return <GroupInfoModal />;
+  if (modal === "forward") return <ForwardModal />;
   return null;
 }

@@ -4,6 +4,7 @@ from typing import Any
 
 MESSAGE_CREATED = "message.created"
 MESSAGE_STATUS = "message.status"  # delivery/read state of a message I sent changed
+MESSAGE_DELETED = "message.deleted"  # deleted for everyone
 REACTION_UPDATED = "reaction.updated"
 CONVERSATION_UPDATED = "conversation.updated"  # created, renamed, members changed, ...
 CONVERSATION_REMOVED = "conversation.removed"  # I was removed from / left a group

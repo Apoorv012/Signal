@@ -14,10 +14,14 @@ export function useConversations() {
 
   return useMemo(() => {
     const list = all ?? [];
+    // A cleared one-to-one chat stays known (so it can be opened) but is not listed until it has
+    // a message again, exactly like a chat that was never used.
+    const visible = list.filter((c) => c.type !== "direct" || c.lastMessage !== null);
     return {
       all: list,
-      pinned: list.filter((c) => c.isPinned),
-      others: list.filter((c) => !c.isPinned),
+      visible,
+      pinned: visible.filter((c) => c.isPinned),
+      others: visible.filter((c) => !c.isPinned),
       isLoading: query.isLoading,
     };
   }, [all, query.isLoading]);
@@ -47,5 +51,5 @@ export function useConversation(id: number): {
 
 export function useTotalUnread(): number {
   const { all } = useConversations();
-  return all.filter((c) => c.unreadCount > 0 && !c.isMuted).length;
+  return all.filter((c) => (c.unreadCount > 0 || c.markedUnread) && !c.isMuted).length;
 }

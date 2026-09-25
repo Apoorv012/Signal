@@ -19,8 +19,12 @@ export const updateConversation = (
 
 export const updateMySettings = (
   id: number,
-  patch: { isPinned?: boolean; isMuted?: boolean; chatTheme?: string },
+  patch: { isPinned?: boolean; isMuted?: boolean; markedUnread?: boolean; chatTheme?: string },
 ) => request<Conversation>(`/conversations/${id}/me`, { method: "PATCH", body: patch });
+
+/** Hides the conversation history for me only. */
+export const clearConversation = (id: number) =>
+  request<Conversation>(`/conversations/${id}/clear`, { method: "POST" });
 
 export const addMembers = (id: number, userIds: number[]) =>
   request<Conversation>(`/conversations/${id}/members`, { method: "POST", body: { userIds } });

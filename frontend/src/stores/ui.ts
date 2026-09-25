@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
-export type ModalId = "new-chat" | "add-contact" | "new-group" | "group-info";
+import type { Message } from "@/types";
+
+export type ModalId = "new-chat" | "add-contact" | "new-group" | "group-info" | "forward";
 
 export interface Toast {
   id: number;
@@ -36,7 +38,15 @@ interface UiState {
   /** Conversation currently on screen; its incoming messages are marked read immediately. */
   activeConversationId: number | null;
   jumpTarget: JumpTarget | null;
+  /** Messages picked with "Select" (one conversation at a time); null when not selecting. */
+  selection: { conversationId: number; ids: number[] } | null;
+  /** Messages the Forward modal will send. */
+  forwardMessages: Message[];
   toasts: Toast[];
+  startSelection: (conversationId: number, messageId: number) => void;
+  toggleSelected: (messageId: number) => void;
+  clearSelection: () => void;
+  openForward: (messages: Message[]) => void;
   requestJump: (target: JumpTarget) => void;
   /** Clears the jump target, but only if it belongs to `conversationId` (when given). */
   clearJump: (conversationId?: number) => void;
@@ -67,7 +77,22 @@ export const useUiStore = create<UiState>((set, get) => {
     modalConversationId: null,
     activeConversationId: null,
     jumpTarget: null,
+    selection: null,
+    forwardMessages: [],
     toasts: [],
+    startSelection: (conversationId, messageId) =>
+      set({ selection: { conversationId, ids: [messageId] } }),
+    toggleSelected: (messageId) =>
+      set((state) => {
+        if (!state.selection) return state;
+        const ids = state.selection.ids.includes(messageId)
+          ? state.selection.ids.filter((id) => id !== messageId)
+          : [...state.selection.ids, messageId];
+        // Unselecting the last message ends selection mode.
+        return { selection: ids.length ? { ...state.selection, ids } : null };
+      }),
+    clearSelection: () => set({ selection: null }),
+    openForward: (messages) => set({ forwardMessages: messages, modal: "forward" }),
     requestJump: (target) => set({ jumpTarget: target }),
     clearJump: (conversationId) =>
       set((state) =>

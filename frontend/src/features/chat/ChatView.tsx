@@ -1,13 +1,19 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 
 import { useConversation } from "@/hooks/useConversations";
+import { updateMySettings } from "@/lib/api/conversations";
+import { upsertConversation } from "@/lib/query/cache";
+import type { Message } from "@/types";
 import { useUiStore } from "@/stores/ui";
 
 import { ChatHeader } from "./ChatHeader";
 import { ChatSearchBar } from "./ChatSearchBar";
+import { DeleteMessagesDialog } from "./DeleteMessagesDialog";
+import { SelectionBar } from "./SelectionBar";
 import { Composer } from "./Composer";
 import { MessageList } from "./MessageList";
 
@@ -18,6 +24,11 @@ export function ChatView({ conversationId }: { conversationId: number }) {
   const setActiveConversation = useUiStore((state) => state.setActiveConversation);
   const pushToast = useUiStore((state) => state.pushToast);
   const hadConversation = useRef(false);
+  const queryClient = useQueryClient();
+  const selection = useUiStore((state) => state.selection);
+  const clearSelection = useUiStore((state) => state.clearSelection);
+  const [deleteTarget, setDeleteTarget] = useState<Message[] | null>(null);
+  const selecting = selection?.conversationId === conversationId;
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -26,6 +37,24 @@ export function ChatView({ conversationId }: { conversationId: number }) {
     setActiveConversation(conversationId);
     return () => setActiveConversation(null);
   }, [conversationId, setActiveConversation]);
+
+  // Selection belongs to one chat; Esc leaves selection mode.
+  useEffect(() => {
+    if (!selecting) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && clearSelection();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [selecting, clearSelection]);
+  useEffect(() => () => clearSelection(), [conversationId, clearSelection]);
+
+  // Opening a chat you marked as unread clears the flag.
+  const markedUnread = conversation?.markedUnread ?? false;
+  useEffect(() => {
+    if (!markedUnread) return;
+    updateMySettings(conversationId, { markedUnread: false })
+      .then((updated) => upsertConversation(queryClient, updated))
+      .catch(() => undefined);
+  }, [markedUnread, conversationId, queryClient]);
 
   // The search bar belongs to one chat: close it when switching.
   useEffect(() => setSearchOpen(false), [conversationId]);
@@ -70,8 +99,23 @@ export function ChatView({ conversationId }: { conversationId: number }) {
           onClose={closeSearch}
         />
       )}
-      <MessageList conversation={conversation} searchTerm={searchOpen ? searchTerm : ""} />
-      <Composer conversationId={conversation.id} />
+      <MessageList
+        conversation={conversation}
+        searchTerm={searchOpen ? searchTerm : ""}
+        onDeleteRequest={setDeleteTarget}
+      />
+      {selecting ? (
+        <SelectionBar
+          conversationId={conversation.id}
+          ids={selection.ids}
+          onDelete={setDeleteTarget}
+        />
+      ) : (
+        <Composer conversationId={conversation.id} />
+      )}
+      {deleteTarget && (
+        <DeleteMessagesDialog messages={deleteTarget} onClose={() => setDeleteTarget(null)} />
+      )}
     </section>
   );
 }

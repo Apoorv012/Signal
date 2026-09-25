@@ -93,6 +93,8 @@ export interface Conversation {
   isPinned: boolean;
   isMuted: boolean;
   unreadCount: number;
+  /** Set by "Mark as unread"; cleared when the chat is opened. */
+  markedUnread: boolean;
   /** Time of the last activity (message, system event or creation): the list sort key. */
   lastActivityAt: string;
   lastMessage: LastMessage | null;
@@ -120,6 +122,7 @@ export type RealtimeEvent =
       type: "reaction.updated";
       data: { messageId: number; conversationId: number; reactions: Reaction[] };
     }
+  | { type: "message.deleted"; data: { conversationId: number; messageIds: number[] } }
   | { type: "conversation.updated"; data: Conversation }
   | { type: "conversation.removed"; data: { conversationId: number } }
   | { type: "typing"; data: { conversationId: number; userId: number; isTyping: boolean } }

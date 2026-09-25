@@ -2,15 +2,18 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
+import type { ContextMenuItem } from "@/components/ui/ContextMenu";
+import { useContextMenu } from "@/hooks/useContextMenu";
 import { useMarkRead } from "@/hooks/useMarkRead";
 import { useMessages } from "@/hooks/useMessages";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { useCurrentUser } from "@/hooks/useSession";
 import { useTypingUsers } from "@/hooks/useTyping";
+import { copyText } from "@/lib/clipboard";
 import { findMember } from "@/lib/chat/conversation";
 import { toMessageRows } from "@/lib/chat/grouping";
 import { type JumpTarget, useUiStore } from "@/stores/ui";
-import type { Conversation } from "@/types";
+import type { Conversation, Message } from "@/types";
 
 import { MessageBubble } from "./MessageBubble";
 import { SystemMessage } from "./SystemMessage";
@@ -25,8 +28,11 @@ const HIGHLIGHT_MS = 4000;
 export function MessageList({
   conversation,
   searchTerm,
+  onDeleteRequest,
 }: {
   conversation: Conversation;
+  /** Asks the chat view to confirm and delete these messages. */
+  onDeleteRequest: (messages: Message[]) => void;
   /** Text the in-chat search bar wants highlighted. */
   searchTerm: string;
 }) {
@@ -38,6 +44,36 @@ export function MessageList({
   const stickToBottom = useRef(true);
   const loadingOlder = useRef(false);
   const isGroup = conversation.type === "group";
+
+  // Right-click menu and multi-select ("Select" keeps the mode open so you can pick more).
+  const { openMenu, menu } = useContextMenu();
+  const selection = useUiStore((state) => state.selection);
+  const startSelection = useUiStore((state) => state.startSelection);
+  const toggleSelected = useUiStore((state) => state.toggleSelected);
+  const openForward = useUiStore((state) => state.openForward);
+  const pushToast = useUiStore((state) => state.pushToast);
+  const selectedIds = selection?.conversationId === conversation.id ? selection.ids : null;
+
+  const menuItems = (message: Message): ContextMenuItem[] => [
+    {
+      label: "Select",
+      onSelect: () =>
+        selectedIds ? toggleSelected(message.id) : startSelection(conversation.id, message.id),
+    },
+    {
+      label: "Copy text",
+      disabled: !message.body,
+      onSelect: () =>
+        void copyText(message.body).then((ok) => pushToast(ok ? "Copied" : "Could not copy")),
+    },
+    { label: "Forward", disabled: !message.body, onSelect: () => openForward([message]) },
+    {
+      label: "Delete",
+      danger: true,
+      separatorBefore: true,
+      onSelect: () => onDeleteRequest([message]),
+    },
+  ];
 
   // A search result asked us to show a message: load history until it exists, scroll, flash.
   const jump = useUiStore((state) => state.jumpTarget);
@@ -138,12 +174,19 @@ export function MessageList({
             showTimer={conversation.disappearingSeconds !== null}
             highlight={searchTerm || listHighlight}
             flash={message.id === flashId}
+            selecting={selectedIds !== null && message.id > 0}
+            selected={selectedIds?.includes(message.id)}
+            onToggleSelect={() => toggleSelected(message.id)}
+            onContextMenu={
+              message.id > 0 ? (event) => openMenu(event, menuItems(message)) : undefined
+            }
             onRetry={retry}
           />
         );
       })}
 
       <TypingIndicator users={typingUsers} isGroup={isGroup} />
+      {menu}
     </div>
   );
 }

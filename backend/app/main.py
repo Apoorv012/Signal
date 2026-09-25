@@ -15,6 +15,7 @@ from app.api.routes import ws
 from app.core.config import settings
 from app.core.errors import AppError
 from app.db.base import Base
+from app.db.columns import add_missing_columns
 from app.db.session import engine, session_scope
 from app.realtime.manager import manager
 from app.services import user_service
@@ -30,6 +31,7 @@ def init_storage() -> None:
 
         Path(engine.url.database).parent.mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(engine)
+    add_missing_columns(engine)
 
 
 @asynccontextmanager

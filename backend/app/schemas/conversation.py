@@ -32,6 +32,7 @@ class ConversationOut(CamelModel):
     avatar_url: str | None
     is_pinned: bool
     is_muted: bool
+    marked_unread: bool
     unread_count: int
     # Time of the last activity (message, system event or creation): the list sort key.
     last_activity_at: datetime
@@ -60,6 +61,7 @@ class UpdateConversationIn(CamelModel):
 class MySettingsIn(CamelModel):
     is_pinned: bool | None = None
     is_muted: bool | None = None
+    marked_unread: bool | None = None
     chat_theme: str | None = None
 
 

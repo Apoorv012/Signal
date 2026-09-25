@@ -2,17 +2,18 @@
 
 from datetime import timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.clock import utcnow
-from app.core.errors import BadRequest, NotFound
+from app.core.errors import BadRequest, Forbidden, NotFound
 from app.models import (
     Conversation,
     ConversationMember,
     ConversationType,
     Message,
+    MessageHidden,
     MessageKind,
     MessageReceipt,
     Reaction,
@@ -156,8 +157,8 @@ def list_messages(
     member = queries.require_member(db, conversation_id, user.id)
     stmt = select(Message).where(
         Message.conversation_id == conversation_id,
-        Message.created_at >= member.joined_at,  # new members do not see earlier history
-        queries.is_visible(),
+        Message.created_at >= queries.history_start(member),  # no earlier history / cleared
+        queries.is_visible(user.id),
     )
     if before_id is not None:
         stmt = stmt.where(Message.id < before_id)
@@ -193,9 +194,13 @@ def search_messages(
         .where(
             ConversationMember.left_at.is_(None),
             Message.created_at >= ConversationMember.joined_at,
+            or_(
+                ConversationMember.cleared_at.is_(None),
+                Message.created_at >= ConversationMember.cleared_at,
+            ),
             Message.kind != MessageKind.SYSTEM,
             Message.body.ilike(f"%{escaped}%", escape="\\"),
-            queries.is_visible(),
+            queries.is_visible(user.id),
         )
     )
     if conversation_id is not None:
@@ -207,7 +212,40 @@ def mark_conversation_read(
     db: Session, user: User, conversation_id: int, up_to_message_id: int
 ) -> None:
     """Advance the read marker and tell the senders their messages were read."""
+    member = queries.require_member(db, conversation_id, user.id)
+    if member.marked_unread:  # opening the chat clears a manual "mark as unread"
+        member.marked_unread = False
     notifier.messages_status(receipts.mark_read(db, user.id, conversation_id, up_to_message_id))
+
+
+DELETE_FOR_EVERYONE_WINDOW = timedelta(hours=24)  # same limit as Signal
+
+
+def delete_messages(db: Session, user: User, message_ids: list[int], for_everyone: bool) -> None:
+    """ "Delete for me" hides messages for `user` only. "Delete for everyone" removes your own
+    recent messages for all members (and pushes a `message.deleted` event)."""
+    messages = [get_message(db, message_id) for message_id in dict.fromkeys(message_ids)]
+    for message in messages:
+        queries.require_member(db, message.conversation_id, user.id)
+
+    if not for_everyone:
+        for message in messages:
+            if db.get(MessageHidden, (message.id, user.id)) is None:
+                db.add(MessageHidden(message_id=message.id, user_id=user.id))
+        db.commit()
+        return
+
+    cutoff = utcnow() - DELETE_FOR_EVERYONE_WINDOW
+    for message in messages:
+        if message.sender_id != user.id or message.kind == MessageKind.SYSTEM:
+            raise Forbidden("You can only delete your own messages for everyone")
+        if message.created_at < cutoff:
+            raise BadRequest("Messages older than 24 hours can only be deleted for you")
+    now = utcnow()
+    for message in messages:
+        message.deleted_at = now
+    db.commit()
+    notifier.messages_deleted(db, messages)
 
 
 def set_reaction(db: Session, user: User, message_id: int, emoji: str) -> Message:

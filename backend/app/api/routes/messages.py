@@ -4,7 +4,14 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models import User
-from app.schemas.message import AttachmentOut, MessageOut, ReactionIn, ReadIn, SendMessageIn
+from app.schemas.message import (
+    AttachmentOut,
+    DeleteMessagesIn,
+    MessageOut,
+    ReactionIn,
+    ReadIn,
+    SendMessageIn,
+)
 from app.services import attachment_service, message_service, presenters
 
 router = APIRouter(tags=["messages"])
@@ -58,6 +65,14 @@ def mark_read(
     db: Session = Depends(get_db),
 ) -> Response:
     message_service.mark_conversation_read(db, user, conversation_id, body.up_to_message_id)
+    return Response(status_code=204)
+
+
+@router.post("/messages/delete", status_code=204)
+def delete_messages(
+    body: DeleteMessagesIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> Response:
+    message_service.delete_messages(db, user, body.message_ids, body.for_everyone)
     return Response(status_code=204)
 
 

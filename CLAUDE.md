@@ -38,7 +38,7 @@ Deliverables still open: public GitHub repo (frontend/ + backend/), README (done
 ```bash
 # backend (from backend/, venv at backend/.venv)
 .venv\Scripts\python -m uvicorn app.main:app --reload --port 8000   # add --host 0.0.0.0 for phone testing
-.venv\Scripts\python -m pytest -q          # 56 tests, ~6s
+.venv\Scripts\python -m pytest -q          # 75 tests, ~10s
 .venv\Scripts\ruff check . ; .venv\Scripts\ruff format .
 
 # frontend (from frontend/)
@@ -100,15 +100,22 @@ Layout and responsibilities are in the README ("Architecture"). Conventions to k
 - Native `<select>` popups need `color-scheme` (set per theme in `globals.css`) to be readable in dark mode.
 - `ruff` ignores B008 for FastAPI `Depends/File/Query/Form/Header` (see `pyproject.toml`).
 - Git prints "LF will be replaced by CRLF" warnings on Windows; harmless.
-- The Claude-in-Chrome extension was not connected in past sessions; the built-in browser pane worked
+- The Claude-in-Chrome extension connects now, but its Chrome could not reach `localhost` (connection error
+  page for `localhost:3000` and `127.0.0.1:3000`), so the built-in browser pane was used. Both were tried
+  in the last session; the built-in pane worked
   (its screenshots are sometimes cropped/timeout; `get_page_text` / `javascript_tool` are reliable).
   `.claude/launch.json` defines `frontend` and `backend` preview servers for that pane.
 
 ## 6. Current status (end of the last session)
 
 Done and committed/staged: everything in the README's "Feature status" marked Done — auth + onboarding,
-contacts, DM + group chat with real-time delivery/read receipts/typing/presence, group admin controls,
-settings placeholders (theme switch works), dark mode, responsive layouts, seed data, 56 backend tests.
+contacts (a direct message auto-saves both people as contacts), DM + group chat with real-time
+delivery/read receipts/typing/presence, group admin controls, message + in-chat search, list filters,
+right-click menus (Phase D below), settings (toggles persist per account in localStorage), dark mode,
+responsive layouts, seed data, 75 backend tests.
+Also fixed after two QA passes: long-word bubble overflow, readable 422 errors + input `maxLength`,
+multiline composer (Shift+Enter), confirm dialogs (leave/remove/log out), clickable links, phone number
+kept out of the verify URL (sessionStorage).
 Working tree check: run `git status` / `git log --oneline` to see what is committed vs staged.
 
 Verification level: backend fully tested; frontend typechecked/linted and exercised in a browser at
@@ -157,23 +164,26 @@ Known items from user feedback and self-review:
 - Settings toggles are local-only placeholders (by design); consider persisting them in localStorage.
 - Remove dead/unused API helpers only if still unused after Phase A (`getMe`, `removeContact`).
 
-### D. Right-click context menus (user request; do after Phase A, before/with B)
+### D. Right-click context menus — DONE (kept here as design notes)
 Replace the browser's default menu with app menus, desktop only (touch keeps long-press). Signal Desktop
 does this: the chat-list menu offers Pin/Unpin, Mark as unread, Mute (duration submenu), Archive and
 Delete; a message has a hover "more" menu (also on right-click) with React, Reply, Forward, Copy, Select,
 Info and Delete ("Delete for me" / "Delete for everyone" within a time limit, own messages only).
 "Select" enters multi-select mode: checkboxes on messages, a footer bar with "N selected", Forward and
 Delete, and a cancel button. Forward opens a chat picker (Signal allows up to 5 chats).
-- **Chat list item:** Pin/Unpin, Mute/Unmute (reuse `updateMySettings`), Mark as unread, Clear messages,
-  Delete chat. "Clear"/"Delete"/"Mark unread" have no backend endpoint yet (per-user `cleared_at` on the
-  member row, mirroring how `joined_at` hides history; leaving/hiding the chat).
-- **Message:** Select, Reply, Copy, Forward, Delete. Multi-select store in `stores/ui.ts` (selected ids +
-  mode); Delete for me needs a per-user hidden-message table; Delete for everyone sets `deleted_at` and
-  pushes a `message.deleted` WebSocket event (handled only in `lib/realtime/handleEvent.ts`).
-  Forward = send a new message with the same body/attachment to each chosen chat (no backend change).
-- Build one reusable `ContextMenu` primitive in `components/ui` (positioned at the cursor, closes on
-  outside click/Esc/scroll, keyboard navigable) and call it from `ConversationListItem` and `MessageBubble`.
-  Keep the default menu on text inputs so paste/spell-check still work.
+- **Chat list item** (`ConversationListItem` + `hooks/useConversationActions`): Pin, Mute, Mark as
+  unread/read (`marked_unread`, cleared on open), Clear messages (`cleared_at` per member, mirrors
+  `joined_at`; `queries.history_start`), Delete chat (1:1 = clear, it returns with the next message;
+  group = leave). A cleared 1:1 chat stays in the cache but `useConversations().visible` hides it.
+- **Message** (`MessageList` + `hooks/useMessageActions`): Select (multi-select state in `stores/ui.ts`,
+  `SelectionBar` replaces the composer), Copy (`lib/clipboard.ts`, works on http LAN), Forward
+  (`ForwardModal`, max 5 chats, text only until attachments exist), Delete (`DeleteMessagesDialog`):
+  "for me" = `message_hidden` row, "for everyone" = own messages < 24 h, sets `deleted_at` and pushes
+  `message.deleted` (handled only in `lib/realtime/handleEvent.ts`).
+- `ContextMenu` + `useContextMenu` are desktop-only (>= 768px) and leave text inputs alone.
+- **Reply / React** items are not in the menus yet: add them when those Phase A features are built.
+- Existing SQLite files get new columns via `app/db/columns.py` (`add_missing_columns`, no Alembic):
+  add any future column there too.
 
 ### C. Deployment + submission
 - Frontend → **Vercel** (`NEXT_PUBLIC_API_URL` = public https backend URL; the WebSocket URL is derived).

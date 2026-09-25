@@ -55,6 +55,19 @@ class MessageReceipt(Base):
     read_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
 
+class MessageHidden(Base):
+    """ "Delete for me": the message disappears for this user only."""
+
+    __tablename__ = "message_hidden"
+
+    message_id: Mapped[int] = mapped_column(
+        ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+
 class Reaction(Base):
     """Signal allows one reaction per user per message (re-reacting replaces the emoji)."""
 

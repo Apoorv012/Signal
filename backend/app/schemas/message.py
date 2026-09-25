@@ -54,6 +54,11 @@ class SendMessageIn(CamelModel):
     attachment_id: int | None = None
 
 
+class DeleteMessagesIn(CamelModel):
+    message_ids: list[int] = Field(min_length=1, max_length=100)
+    for_everyone: bool = False
+
+
 class ReactionIn(CamelModel):
     emoji: str = Field(min_length=1, max_length=16)
 

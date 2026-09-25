@@ -125,6 +125,18 @@ export function updateMessageStatus(
   );
 }
 
+/** Drops messages from a chat's history (deleted by me or for everyone). */
+export function removeMessages(qc: QueryClient, conversationId: number, ids: number[]): void {
+  qc.setQueryData<MessagesPage>(queryKeys.messages(conversationId), (page) =>
+    page ? { ...page, items: page.items.filter((m) => !ids.includes(m.id)) } : page,
+  );
+}
+
+/** Empties a chat's history in the cache ("Clear messages"). */
+export function clearMessages(qc: QueryClient, conversationId: number): void {
+  qc.setQueryData<MessagesPage>(queryKeys.messages(conversationId), { items: [], hasMore: false });
+}
+
 export function updateReactions(
   qc: QueryClient,
   event: { messageId: number; conversationId: number; reactions: Reaction[] },
@@ -163,6 +175,6 @@ export function removeConversation(qc: QueryClient, conversationId: number): voi
 
 export function clearUnread(qc: QueryClient, conversationId: number): void {
   qc.setQueryData<Conversation[]>(queryKeys.conversations, (list) =>
-    list?.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0 } : c)),
+    list?.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0, markedUnread: false } : c)),
   );
 }

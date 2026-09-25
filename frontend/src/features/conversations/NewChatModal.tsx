@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useContacts } from "@/hooks/useContacts";
+import { filterUsers } from "@/lib/chat/users";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useCurrentUser } from "@/hooks/useSession";
 import { createDirect } from "@/lib/api/conversations";
@@ -33,7 +34,13 @@ export function NewChatModal() {
     enabled: term.length >= 2,
   });
   const searching = query.trim().length > 0;
-  const users: User[] = searching ? (search.data ?? []) : contacts;
+  // Typing filters your saved contacts instantly, then adds other registered users from the server.
+  const users: User[] = searching
+    ? [
+        ...filterUsers(contacts, query),
+        ...(search.data ?? []).filter((found) => !contacts.some((c) => c.id === found.id)),
+      ]
+    : contacts;
 
   const startChat = async (user: User) => {
     try {

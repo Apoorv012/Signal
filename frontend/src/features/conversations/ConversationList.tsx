@@ -33,6 +33,20 @@ function SectionLabel({
   );
 }
 
+type ListFilter = "all" | "unread" | "groups";
+
+const FILTERS: { id: ListFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "unread", label: "Unread" },
+  { id: "groups", label: "Groups" },
+];
+
+const passesFilter = (conversation: Conversation, filter: ListFilter): boolean =>
+  filter === "all" ||
+  (filter === "unread"
+    ? conversation.unreadCount > 0 || conversation.markedUnread
+    : conversation.type === "group");
+
 function matches(conversation: Conversation, query: string): boolean {
   const q = query.toLowerCase();
   return (
@@ -49,13 +63,14 @@ function matches(conversation: Conversation, query: string): boolean {
 export function ConversationList() {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const selectedId = conversationId ? Number(conversationId) : undefined;
-  const { all, pinned, others, isLoading } = useConversations();
+  const { all, visible, pinned, others, isLoading } = useConversations();
+  const [filter, setFilter] = useState<ListFilter>("all");
   const [query, setQuery] = useState("");
 
   const searching = query.trim().length > 0;
   const results = useMemo(
-    () => (searching ? all.filter((c) => matches(c, query.trim())) : []),
-    [all, query, searching],
+    () => (searching ? visible.filter((c) => matches(c, query.trim())) : []),
+    [visible, query, searching],
   );
 
   const messageSearch = useMessageSearch(query);
@@ -65,6 +80,9 @@ export function ConversationList() {
     return conversation ? [{ message, conversation }] : [];
   });
   const showHeadings = results.length > 0 && messageHits.length > 0;
+
+  const shownPinned = pinned.filter((c) => passesFilter(c, filter));
+  const shownOthers = others.filter((c) => passesFilter(c, filter));
 
   const renderItems = (items: Conversation[]) =>
     items.map((c) => (
@@ -82,6 +100,24 @@ export function ConversationList() {
       <div className="px-4 pb-2 md:px-4">
         <SearchInput value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
+      {!searching && (
+        <div className="flex gap-2 px-4 pb-2" role="group" aria-label="Filter chats">
+          {FILTERS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              aria-pressed={filter === id}
+              onClick={() => setFilter(id)}
+              className={clsx(
+                "rounded-full px-3.5 py-1 text-[0.875rem] font-medium transition-colors",
+                filter === id ? "bg-unread text-white" : "bg-field text-text hover:brightness-95",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="min-h-0 flex-1 scrollbar-thin overflow-y-auto pb-2">
         {isLoading && (
@@ -109,14 +145,19 @@ export function ConversationList() {
           </>
         ) : (
           <>
-            {pinned.length > 0 && (
+            {shownPinned.length > 0 && (
               <>
                 <SectionLabel>Pinned</SectionLabel>
-                {renderItems(pinned)}
+                {renderItems(shownPinned)}
                 <SectionLabel>Chats</SectionLabel>
               </>
             )}
-            {renderItems(others)}
+            {renderItems(shownOthers)}
+            {!isLoading && filter !== "all" && shownPinned.length + shownOthers.length === 0 && (
+              <p className="text-secondary px-6 py-8 text-center text-[0.9375rem]">
+                {filter === "unread" ? "No unread chats" : "No groups yet"}
+              </p>
+            )}
           </>
         )}
       </div>

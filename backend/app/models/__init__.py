@@ -2,7 +2,7 @@
 
 from app.models.conversation import Conversation, ConversationMember
 from app.models.enums import ConversationType, MemberRole, MessageKind, MessageStatus
-from app.models.message import Attachment, Message, MessageReceipt, Reaction
+from app.models.message import Attachment, Message, MessageHidden, MessageReceipt, Reaction
 from app.models.user import AuthSession, Contact, User
 
 __all__ = [
@@ -14,6 +14,7 @@ __all__ = [
     "ConversationType",
     "MemberRole",
     "Message",
+    "MessageHidden",
     "MessageKind",
     "MessageReceipt",
     "MessageStatus",

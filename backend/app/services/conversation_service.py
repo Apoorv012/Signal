@@ -35,7 +35,16 @@ def list_conversations(db: Session, user_id: int) -> list[Conversation]:
     A one-to-one chat only appears once it has a message: merely opening "New message" with
     someone must not show up in their list (or yours) until something is actually sent.
     """
-    has_messages = exists().where(Message.conversation_id == Conversation.id, queries.is_visible())
+    # Correlated with the member row joined below: "has anything this user can still see".
+    has_messages = exists().where(
+        Message.conversation_id == Conversation.id,
+        Message.created_at >= ConversationMember.joined_at,
+        or_(
+            ConversationMember.cleared_at.is_(None),
+            Message.created_at >= ConversationMember.cleared_at,
+        ),
+        queries.is_visible(user_id),
+    )
     return list(
         db.scalars(
             select(Conversation)
@@ -164,15 +173,27 @@ def update_my_settings(
     conversation_id: int,
     is_pinned: bool | None,
     is_muted: bool | None,
+    marked_unread: bool | None,
     chat_theme: str | None,
 ) -> Conversation:
     member = queries.require_member(db, conversation_id, user.id)
+    if marked_unread is not None:
+        member.marked_unread = marked_unread
     if is_pinned is not None:
         member.is_pinned = is_pinned
     if is_muted is not None:
         member.is_muted = is_muted
     if chat_theme is not None:
         member.chat_theme = chat_theme or None
+    db.commit()
+    return queries.get_conversation(db, conversation_id)
+
+
+def clear_history(db: Session, user: User, conversation_id: int) -> Conversation:
+    """ "Clear messages": hides everything so far for this user only. Others are unaffected."""
+    member = queries.require_member(db, conversation_id, user.id)
+    member.cleared_at = utcnow()
+    member.marked_unread = False
     db.commit()
     return queries.get_conversation(db, conversation_id)
 

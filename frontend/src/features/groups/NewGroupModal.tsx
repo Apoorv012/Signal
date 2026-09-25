@@ -6,9 +6,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { TextField } from "@/components/ui/TextField";
 import { ContactRow } from "@/features/conversations/ContactRow";
 import { useContacts } from "@/hooks/useContacts";
+import { filterUsers } from "@/lib/chat/users";
 import { createGroup } from "@/lib/api/conversations";
 import { upsertConversation } from "@/lib/query/cache";
 import { useUiStore } from "@/stores/ui";
@@ -24,6 +26,7 @@ export function NewGroupModal() {
   const [step, setStep] = useState<Step>("members");
   const [selected, setSelected] = useState<number[]>([]);
   const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
   const [busy, setBusy] = useState(false);
 
   const toggle = (id: number) =>
@@ -86,7 +89,14 @@ export function NewGroupModal() {
         </Button>
       }
     >
-      {contacts.map((user) => (
+      <div className="p-4 pb-2">
+        <SearchInput
+          placeholder="Search contacts"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+      {filterUsers(contacts, query).map((user) => (
         <ContactRow
           key={user.id}
           user={user}
@@ -98,6 +108,9 @@ export function NewGroupModal() {
         <p className="text-secondary px-4 py-8 text-center text-[0.9375rem]">
           Add some contacts first to create a group.
         </p>
+      )}
+      {contacts.length > 0 && filterUsers(contacts, query).length === 0 && (
+        <p className="text-secondary px-4 py-8 text-center text-[0.9375rem]">No contacts match</p>
       )}
     </Modal>
   );

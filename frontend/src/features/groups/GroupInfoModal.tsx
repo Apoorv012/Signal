@@ -7,9 +7,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal } from "@/components/ui/Modal";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { TextField } from "@/components/ui/TextField";
 import { ContactRow } from "@/features/conversations/ContactRow";
 import { useContacts } from "@/hooks/useContacts";
+import { filterUsers } from "@/lib/chat/users";
 import { useConversation } from "@/hooks/useConversations";
 import { useCurrentUser } from "@/hooks/useSession";
 import {
@@ -44,6 +46,7 @@ export function GroupInfoModal() {
   const { contacts } = useContacts();
   const [view, setView] = useState<View>("info");
   const [picked, setPicked] = useState<number[]>([]);
+  const [query, setQuery] = useState("");
   const [title, setTitle] = useState<string>();
   const [confirm, setConfirm] = useState<"leave" | Member | null>(null);
 
@@ -76,9 +79,8 @@ export function GroupInfoModal() {
   };
 
   if (view === "add") {
-    const candidates = contacts.filter(
-      (c) => !conversation.members.some((m) => m.user.id === c.id),
-    );
+    const available = contacts.filter((c) => !conversation.members.some((m) => m.user.id === c.id));
+    const candidates = filterUsers(available, query);
     return (
       <Modal
         title="Add members"
@@ -98,6 +100,13 @@ export function GroupInfoModal() {
           </Button>
         }
       >
+        <div className="p-4 pb-2">
+          <SearchInput
+            placeholder="Search contacts"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
         {candidates.map((user) => (
           <ContactRow
             key={user.id}
@@ -112,7 +121,9 @@ export function GroupInfoModal() {
         ))}
         {candidates.length === 0 && (
           <p className="text-secondary px-4 py-8 text-center text-[0.9375rem]">
-            All your contacts are already in this group.
+            {available.length === 0
+              ? "All your contacts are already in this group."
+              : "No contacts match"}
           </p>
         )}
       </Modal>

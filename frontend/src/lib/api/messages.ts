@@ -29,6 +29,10 @@ export const markRead = (conversationId: number, upToMessageId: number) =>
     body: { upToMessageId },
   });
 
+/** "Delete for me" (default) or, for my own recent messages, "for everyone". */
+export const deleteMessages = (messageIds: number[], forEveryone: boolean) =>
+  request<void>("/messages/delete", { method: "POST", body: { messageIds, forEveryone } });
+
 export const setReaction = (messageId: number, emoji: string) =>
   request<Message>(`/messages/${messageId}/reaction`, { method: "PUT", body: { emoji } });
 

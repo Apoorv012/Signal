@@ -72,9 +72,22 @@ def update_my_settings(
     db: Session = Depends(get_db),
 ) -> ConversationOut:
     conversation = conversation_service.update_my_settings(
-        db, user, conversation_id, body.is_pinned, body.is_muted, body.chat_theme
+        db,
+        user,
+        conversation_id,
+        body.is_pinned,
+        body.is_muted,
+        body.marked_unread,
+        body.chat_theme,
     )
     return _out(db, conversation, user)
+
+
+@router.post("/{conversation_id}/clear", response_model=ConversationOut)
+def clear_history(
+    conversation_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> ConversationOut:
+    return _out(db, conversation_service.clear_history(db, user, conversation_id), user)
 
 
 @router.post("/{conversation_id}/members", response_model=ConversationOut)

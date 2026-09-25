@@ -4,6 +4,7 @@ import { findMember } from "@/lib/chat/conversation";
 import { previewText } from "@/lib/chat/preview";
 import {
   removeConversation,
+  removeMessages,
   updateMessageStatus,
   updateReactions,
   upsertConversation,
@@ -30,6 +31,9 @@ export function handleEvent(qc: QueryClient, event: RealtimeEvent): void {
     }
     case "message.status":
       updateMessageStatus(qc, event.data);
+      break;
+    case "message.deleted":
+      removeMessages(qc, event.data.conversationId, event.data.messageIds);
       break;
     case "reaction.updated":
       updateReactions(qc, event.data);

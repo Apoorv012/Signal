@@ -145,7 +145,7 @@ def conversation_out(db: Session, conversation: Conversation, viewer_id: int) ->
     users = [db.get(User, m.user_id) for m in member_rows]
     title, avatar_url = _conversation_title_and_avatar(conversation, users, viewer_id)
 
-    last = queries.last_message(db, conversation.id)
+    last = queries.last_message(db, me)
     last_out = None
     if last is not None:
         sender_name = None
@@ -166,6 +166,7 @@ def conversation_out(db: Session, conversation: Conversation, viewer_id: int) ->
         avatar_url=avatar_url,
         is_pinned=me.is_pinned,
         is_muted=me.is_muted,
+        marked_unread=me.marked_unread,
         unread_count=queries.unread_count(db, me),
         last_activity_at=conversation.last_message_at,
         last_message=last_out,

@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { IconButton } from "@/components/ui/IconButton";
 import { useComingSoon } from "@/hooks/useComingSoon";
+import { settingKey, useSetting } from "@/hooks/useSetting";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { useTypingBroadcast } from "@/hooks/useTyping";
 
@@ -21,6 +22,7 @@ export function Composer({ conversationId }: { conversationId: number }) {
   const [text, setText] = useState("");
   const { send } = useSendMessage(conversationId);
   const { onInput, stop } = useTypingBroadcast(conversationId);
+  const [sendWithEnter] = useSetting(settingKey("chats", "Send with Enter"), true);
   const canSend = text.trim().length > 0;
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -96,9 +98,11 @@ export function Composer({ conversationId }: { conversationId: number }) {
             }}
             onKeyDown={(event) => {
               const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+              // "Send with Enter" on: Enter sends, Shift+Enter is a new line. Off: Ctrl/Cmd+Enter sends.
+              const wantsSend = sendWithEnter ? !event.shiftKey : event.ctrlKey || event.metaKey;
               if (
                 event.key === "Enter" &&
-                !event.shiftKey &&
+                wantsSend &&
                 !event.nativeEvent.isComposing &&
                 isDesktop
               ) {

@@ -60,5 +60,8 @@ class ConversationMember(Base):
     is_pinned: Mapped[bool] = mapped_column(default=False)
     is_muted: Mapped[bool] = mapped_column(default=False)
     chat_theme: Mapped[str | None] = mapped_column(String(24))
+    # "Clear messages": history before this moment is hidden from this user only.
+    cleared_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    marked_unread: Mapped[bool] = mapped_column(default=False)
 
     conversation: Mapped[Conversation] = relationship(back_populates="members")
