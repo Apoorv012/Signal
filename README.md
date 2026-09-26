@@ -8,6 +8,8 @@ Built for the Scaler SDE Fullstack assessment. Encryption is **simulated** (as t
 - **Backend:** Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2, SQLite
 - **Real-time:** WebSockets (FastAPI native)
 
+> **Live demo:** <https://signal.apoorvm.com> (demo login: `+15550000001` or `+15550000002`, code `123456`).
+>
 > Status snapshot: see [Feature status](#feature-status). Contributors / AI agents: read
 > [`CLAUDE.md`](CLAUDE.md) first.
 
@@ -99,7 +101,7 @@ cd frontend && npm run typecheck && npm run lint && npx prettier --check "src/**
 | Reply / quoted messages | Done: Reply in the message menu, quote strip above the composer (Esc cancels), quote inside the bubble that jumps to the original |
 | Keyboard shortcuts | Done: Alt+N new chat, Ctrl+F search in chat, Ctrl+Shift+F search chats, Alt+↑/↓ switch chat, Ctrl+/ (or ?) cheat sheet, Esc, Enter / Shift+Enter |
 | Voice / video calls, stories, linked devices | Placeholders ("coming soon") as the brief allows |
-| Deployment (Vercel + always-on backend) | Not done |
+| Deployment | Done: <https://signal.apoorvm.com> (Docker Compose + Caddy on EC2, see `deploy/`) |
 
 ---
 

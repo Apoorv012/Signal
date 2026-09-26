@@ -212,7 +212,7 @@ Delete, and a cancel button. Forward opens a chat picker (Signal allows up to 5 
 - Existing SQLite files get new columns via `app/db/columns.py` (`add_missing_columns`, no Alembic):
   add any future column there too.
 
-### C. Deployment + submission
+### C. Deployment + submission — DONE (live at https://signal.apoorvm.com, Docker Compose + Caddy on EC2 via `deploy/`; repo is public; README has the demo link). The notes below are the original plan.
 - Frontend → **Vercel** (`NEXT_PUBLIC_API_URL` = public https backend URL; the WebSocket URL is derived).
 - Backend → an always-on host (user has free credits, must not spin down). Add a `Dockerfile`
   (uvicorn, single worker), mount a persistent volume for `DATABASE_URL=sqlite:////data/signal.db` and
