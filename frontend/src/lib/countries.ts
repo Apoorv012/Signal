@@ -63,6 +63,33 @@ export function toE164(country: Country, national: string): string {
   return `+${country.dial}${digits}`;
 }
 
+/** Digit group sizes per dial code; the last group takes whatever is left. */
+const GROUPS: Record<string, number[]> = {
+  "1": [3, 3, 4],
+  "91": [5, 5],
+  "44": [4, 6],
+  "61": [3, 3, 3],
+  "49": [4, 8],
+  "33": [1, 2, 2, 2, 2],
+};
+const DEFAULT_GROUPS = [3, 3, 4];
+
+/** "9560861710" -> "95608 61710" (IN). Only formats while typing; toE164 strips the spaces again. */
+export function formatNational(country: Country, input: string): string {
+  const maxDigits = MAX_TOTAL_DIGITS - country.dial.length;
+  const digits = input.replace(/\D/g, "").slice(0, maxDigits);
+  const sizes = GROUPS[country.dial] ?? DEFAULT_GROUPS;
+  const parts: string[] = [];
+  let start = 0;
+  for (const size of sizes) {
+    if (start >= digits.length) break;
+    parts.push(digits.slice(start, start + size));
+    start += size;
+  }
+  if (start < digits.length) parts.push(digits.slice(start));
+  return parts.join(" ");
+}
+
 export function isValidNumber(country: Country, national: string): boolean {
   const total = toE164(country, national).length - 1; // minus "+"
   return total >= MIN_TOTAL_DIGITS && total <= MAX_TOTAL_DIGITS;

@@ -4,7 +4,14 @@ import clsx from "clsx";
 import { useState } from "react";
 
 import { Icon } from "@/components/icons/Icon";
-import { COUNTRIES, type Country, DEFAULT_COUNTRY, isValidNumber, toE164 } from "@/lib/countries";
+import {
+  COUNTRIES,
+  type Country,
+  DEFAULT_COUNTRY,
+  formatNational,
+  isValidNumber,
+  toE164,
+} from "@/lib/countries";
 
 /** State for a phone input: the chosen country, the typed national number, and the E.164 result. */
 export function usePhoneInput() {
@@ -62,7 +69,9 @@ export function PhoneField({
             value={country.iso}
             disabled={disabled}
             onChange={(e) => {
-              setCountry(COUNTRIES.find((c) => c.iso === e.target.value) ?? DEFAULT_COUNTRY);
+              const next = COUNTRIES.find((c) => c.iso === e.target.value) ?? DEFAULT_COUNTRY;
+              setCountry(next);
+              setNational(formatNational(next, national)); // regroup for the new country
               onChange?.();
             }}
             className="[&>option]:bg-chat [&>option]:text-text absolute inset-0 cursor-pointer opacity-0"
@@ -85,7 +94,7 @@ export function PhoneField({
           placeholder="555 000 0001"
           value={national}
           onChange={(e) => {
-            setNational(e.target.value);
+            setNational(formatNational(country, e.target.value));
             onChange?.();
           }}
           className={clsx(

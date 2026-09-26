@@ -60,12 +60,15 @@ export function VerifyForm() {
         disabled={busy}
         maxLength={6}
         placeholder="------"
-        className="text-center text-[1.5rem] tracking-[0.5em]"
+        className="pl-[0.5em] text-center text-[1.5rem] tracking-[0.5em]" /* pl offsets the trailing letter-spacing so digits sit centred */
         value={code}
         error={error}
         onChange={(e) => {
           setError(undefined);
-          setCode(e.target.value.replace(/\D/g, ""));
+          const digits = e.target.value.replace(/\D/g, "");
+          setCode(digits);
+          // Full code entered: drop focus so the caret and highlight rest.
+          if (digits.length === 6) e.target.blur();
         }}
       />
       <Button type="submit" fullWidth disabled={code.length !== 6 || busy || !phone}>
