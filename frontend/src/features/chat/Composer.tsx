@@ -30,7 +30,7 @@ const formatClock = (total: number) =>
   `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 
 /**
- * Message input row. Enter sends on desktop (Shift+Enter = new line); on the phone Enter is a new line.
+ * Message input row. Enter sends with a mouse/keyboard (Shift+Enter = new line); on touch devices Enter is a new line.
  * Above it: the message being replied to and/or the attachment about to be sent.
  * Desktop: [emoji] [ input ] [sticker] [mic|send] [+]
  * iPhone:  [+] [ input · sticker ] [camera] [mic|send]   (the + turns into a close button when open)
@@ -302,14 +302,15 @@ export function Composer({ conversationId }: { conversationId: number }) {
                   else if (pending) discardPending();
                   return;
                 }
-                const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+                // Decided by input device, not width: a narrow laptop window still has a keyboard.
+                const hasKeyboard = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
                 // "Send with Enter" on: Enter sends, Shift+Enter is a new line. Off: Ctrl/Cmd+Enter sends.
                 const wantsSend = sendWithEnter ? !event.shiftKey : event.ctrlKey || event.metaKey;
                 if (
                   event.key === "Enter" &&
                   wantsSend &&
                   !event.nativeEvent.isComposing &&
-                  isDesktop
+                  hasKeyboard
                 ) {
                   event.preventDefault();
                   submit();

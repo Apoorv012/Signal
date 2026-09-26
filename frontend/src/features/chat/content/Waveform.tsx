@@ -8,14 +8,16 @@ function barHeights(seed: number): number[] {
   });
 }
 
-export function Waveform({ seed = 1 }: { seed?: number }) {
+/** `progress` (0..1) brightens the bars already played. */
+export function Waveform({ seed = 1, progress = 0 }: { seed?: number; progress?: number }) {
+  const playedBars = Math.round(progress * BAR_COUNT);
   return (
     <div className="flex h-8 flex-1 items-center gap-[0.1875rem]" aria-hidden>
       <span className="h-8 w-[0.125rem] rounded-full bg-current" />
       {barHeights(seed).map((height, i) => (
         <span
           key={i}
-          className="w-[0.125rem] rounded-full bg-current opacity-60"
+          className={`w-[0.125rem] rounded-full bg-current ${i < playedBars ? "" : "opacity-60"}`}
           style={{ height: `${height}rem` }}
         />
       ))}
